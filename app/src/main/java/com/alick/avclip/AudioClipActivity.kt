@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.SeekBar
 import android.widget.Toast
-import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioClipBinding
@@ -15,9 +14,6 @@ import com.alick.avsdk.bean.AudioBean
 import com.alick.commonlibrary.BaseActivity
 import com.alick.commonlibrary.UriUtils
 import com.alick.utilslibrary.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 
 
@@ -96,19 +92,18 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
                 outFile,
                 (viewBinding.sbBegin.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
                 (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
-            ) { progress: Long, max: Long ->
-
-                BLog.i("处理进度,progress:${progress},max:${max}")
-                dialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                if (!dialog.isShowing && progress < max) {
-                    dialog.show()
-                } else if (dialog.isShowing && progress >= max) {
+                onProgress = { progress: Long, max: Long ->
+                    BLog.i("处理进度,progress:${progress},max:${max}")
+                    dialog.progress = (progress.toDouble() / max * maxProgress).toInt()
+                    if (!dialog.isShowing) {
+                        dialog.show()
+                    }
+                }, onFinished = {
                     dialog.hide()
                     //截取完成,输出所耗时长和文件输出路径
                     viewBinding.tvSpendTimeValue.text = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvOutputPathValue.text = outFile.absolutePath
-                }
-            }
+                })
         }
 
         viewBinding.btnCopy.setOnClickListener {
