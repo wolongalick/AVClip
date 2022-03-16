@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="WW">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="WM">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
+    <style name="MM">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
+    <style name="MW">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="WW.Text14Gray">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_gray</item>
+    </style>
+
+    <style name="WW.Text14Black">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text_second</item>
+    </style>
+
+    <style name="WW.Text16Black">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/color_text_second</item>
+    </style>
+
+</resources>

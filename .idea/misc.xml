@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/power_dialog.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/preference_header_item.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/preference_information_material.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/preference_widget_checkbox.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/preference_widget_seekbar.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/preferences.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/progress_dialog.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/progress_dialog_holo.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/progress_dialog_material.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/recent_apps_dialog.xml" value="0.27447916666666666" />
+        <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/restrictions_pin_challenge.xml" value="0.27447916666666666" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_clip.xml" value="0.5" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>
