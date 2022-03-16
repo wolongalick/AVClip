@@ -6,6 +6,7 @@ import android.net.Uri
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioClipBinding
 import com.alick.avsdk.AudioClipUtils
@@ -91,7 +92,7 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
 
             lifecycleScope.launch {
                 withContext(Dispatchers.IO) {
-                    val outFile = File(getExternalFilesDir("output"), TimeUtils.getCurrentTime() + ".mp3")
+                    val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), TimeUtils.getCurrentTime() + ".mp3")
                     AudioClipUtils.clip(
                         File(viewBinding.etSrcFilePath.text.toString().trim()),
                         outFile,
