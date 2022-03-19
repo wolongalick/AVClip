@@ -11,8 +11,10 @@ import com.alick.avclip.databinding.ActivityAudioClipBinding
 import com.alick.avsdk.AudioClipUtils
 import com.alick.avsdk.MediaParser
 import com.alick.avsdk.bean.AudioBean
+import com.alick.avsdk.util.PCMToAAC
 import com.alick.commonlibrary.BaseActivity
 import com.alick.commonlibrary.UriUtils
+import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.*
 import java.io.File
 
@@ -103,6 +105,19 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
                     //截取完成,输出所耗时长和文件输出路径
                     viewBinding.tvSpendTimeValue.text = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvOutputPathValue.text = outFile.absolutePath
+
+                    val lameUtils = LameUtils()
+                    BLog.i("lame将pcm转换为MP3,准备开始")
+                    lameUtils.init(
+                        outFile.absolutePath.replace(".mp3", ".pcm"),
+                        audioBean.channelCount,
+                        audioBean.bitrate,
+                        audioBean.sampleRate,
+                        outFile.absolutePath.replace(".mp3", "_lame.mp3")
+                    )
+                    lameUtils.encode()
+                    lameUtils.destroy()
+                    BLog.i("lame将pcm转换为MP3,已完成")
                 })
         }
 
@@ -150,7 +165,9 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
         sb.append("音频采样率:${audioBean.sampleRate}\n")
             .append("比特率:${audioBean.bitrate}\n")
             .append("时长:${TimeFormatUtils.format((audioBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
-            .append("pcm编码:${audioBean.pcmEncoding}")
+            .append("pcm编码:${audioBean.pcmEncoding}\n")
+            .append("缓冲区最大尺寸:${audioBean.maxInputSize}\n")
+            .append("音频声道数:${audioBean.channelCount}\n")
 
         viewBinding.etInfo.setText(sb.toString())
         setupSeekBar(audioBean.durationOfMicroseconds)
