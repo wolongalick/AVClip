@@ -2,6 +2,9 @@ package com.alick.lamelibrary
 
 class LameUtils {
 
+    interface Callback{
+        fun onProgress(progress: Long, max: Long)
+    }
 
     /**
      * A native method that is implemented by the 'lamelibrary' native library,
@@ -9,7 +12,8 @@ class LameUtils {
      */
     external fun stringFromJNI(): String
     external fun init(pcmPath: String?, audioChannels: Int, bitRate: Int, sampleRate: Int, mp3Path: String?)
-    external fun encode()
+//    external fun encode(onProgress:(progress:Long,max:Long)->Unit)
+    external fun encode(onProgress:Callback)
     external fun destroy()
 
     companion object {

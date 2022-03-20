@@ -41,7 +41,7 @@ long getFileSize(FILE *fp) {
 }
 
 
-void Mp3Encoder::Encode() {
+void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
     int buffersize = 1024 * 256;
     short *buffer = new short[buffersize / 2];
     short *leftBuffer = new short[buffersize / 4];
@@ -49,11 +49,14 @@ void Mp3Encoder::Encode() {
     unsigned char *mp3_buffer = new unsigned char[buffersize];
     size_t readBufferSize = 0;
 
-    long fileSize=getFileSize(pcmFile);
-    LOGI("文件总大小:%ld",fileSize)
+    long fileSize = getFileSize(pcmFile);
+    LOGI("文件总大小:%ld", fileSize)
+    jclass function2Jclass = env->FindClass("com/alick/lamelibrary/LameUtils$Callback");
+    jmethodID invokeJmethodID = env->GetMethodID(function2Jclass, "onProgress", "(JJ)V");
+    LOGI("invokeJmethodID:%d", invokeJmethodID != NULL)
 
     while ((readBufferSize = fread(buffer, 2, buffersize / 2, pcmFile)) > 0) {
-        LOGI("读取的readBufferSize:%d,ftell:%ld", readBufferSize,ftell(pcmFile))
+        LOGI("读取的readBufferSize:%d,ftell:%ld", readBufferSize, ftell(pcmFile))
         for (int i = 0; i < readBufferSize; ++i) {
             if (i % 2 == 0) {
                 leftBuffer[i / 2] = buffer[i];
@@ -63,6 +66,8 @@ void Mp3Encoder::Encode() {
         }
         size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, readBufferSize / 2, mp3_buffer, buffersize);
         fwrite(mp3_buffer, 1, wroteSize, mp3File);
+        //将读文件的进度,回调给应用层
+        env->CallVoidMethod(on_progress, invokeJmethodID, (jlong)ftell(pcmFile),(jlong) fileSize);
     }
 
     delete[] buffer;

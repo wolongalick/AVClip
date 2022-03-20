@@ -34,8 +34,8 @@ Java_com_alick_lamelibrary_LameUtils_init(JNIEnv *env, jobject instance, jstring
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_alick_lamelibrary_LameUtils_encode(JNIEnv *env, jobject instance) {
-    encoder->Encode();
+Java_com_alick_lamelibrary_LameUtils_encode(JNIEnv *env, jobject instance, jobject on_progress) {
+    encoder->Encode(env, on_progress);
 }
 
 extern "C"

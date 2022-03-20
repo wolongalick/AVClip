@@ -7,7 +7,7 @@
 
 #include <android/log.h>
 
-#define LOG_TAG "cxw"
+#define LOG_TAG "JNI_cxw"
 #define LOGI(format, args...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, format, ##args);
 #define LOGE(format, args...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, format, ##args);
 

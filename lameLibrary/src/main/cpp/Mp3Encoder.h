@@ -6,6 +6,7 @@
 #define AVCLIP_MP3ENCODER_H
 
 #include <cstdio>
+#include <jni.h>
 #include "lame/lame.h"
 
 class Mp3Encoder {
@@ -17,7 +18,7 @@ public:
     Mp3Encoder();
     ~Mp3Encoder();
     int Init(const char* pcmFilePath,int channels,int bitRate,int sampleRate,const char* mp3FilePath);
-    void Encode();
+    void Encode(JNIEnv *env, jobject on_progress);
     void Destroy();
 };
 

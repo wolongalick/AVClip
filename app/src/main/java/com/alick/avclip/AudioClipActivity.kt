@@ -1,21 +1,27 @@
 package com.alick.avclip
 
+import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Message
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioClipBinding
 import com.alick.avsdk.AudioClipUtils
 import com.alick.avsdk.MediaParser
 import com.alick.avsdk.bean.AudioBean
-import com.alick.avsdk.util.PCMToAAC
 import com.alick.commonlibrary.BaseActivity
 import com.alick.commonlibrary.UriUtils
 import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 
@@ -29,8 +35,9 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
     private val AUDIO_FILE_REQUEST_CODE = 1
     private lateinit var audioBean: AudioBean
     private val maxProgress = 100
+    private val MSG_TYPE_PCM_TRANSITION_MP3 = 1000
 
-    private val dialog: ProgressDialog by lazy {
+    private val clipDialog: ProgressDialog by lazy {
         val progressDialog = ProgressDialog(this)
         progressDialog.progress = 0
         progressDialog.max = maxProgress
@@ -38,6 +45,30 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
         progressDialog
     }
 
+    private val pcmTransitionMp3Dialog: ProgressDialog by lazy {
+        val progressDialog = ProgressDialog(this)
+        progressDialog.progress = 0
+        progressDialog.max = maxProgress
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog
+    }
+
+    private val handler: Handler = @SuppressLint("HandlerLeak")
+    object : Handler() {
+        override fun handleMessage(msg: Message) {
+            when (msg.what) {
+                MSG_TYPE_PCM_TRANSITION_MP3 -> {
+                    val process = (maxProgress * ((msg.obj as Double))).toInt()
+                    pcmTransitionMp3Dialog.progress = process
+                    if(process==maxProgress){
+                        pcmTransitionMp3Dialog.hide()
+                    }else if (!pcmTransitionMp3Dialog.isShowing) {
+                        pcmTransitionMp3Dialog.show()
+                    }
+                }
+            }
+        }
+    }
 
     override fun initListener() {
         viewBinding.btnImport.setOnClickListener {
@@ -96,28 +127,17 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
                 (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
                 onProgress = { progress: Long, max: Long ->
                     BLog.i("处理进度,progress:${progress},max:${max}")
-                    dialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                    if (!dialog.isShowing) {
-                        dialog.show()
+                    clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
+                    if (!clipDialog.isShowing) {
+                        clipDialog.show()
                     }
                 }, onFinished = {
-                    dialog.hide()
+                    clipDialog.hide()
                     //截取完成,输出所耗时长和文件输出路径
                     viewBinding.tvSpendTimeValue.text = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvOutputPathValue.text = outFile.absolutePath
 
-                    val lameUtils = LameUtils()
-                    BLog.i("lame将pcm转换为MP3,准备开始")
-                    lameUtils.init(
-                        outFile.absolutePath.replace(".mp3", ".pcm"),
-                        audioBean.channelCount,
-                        audioBean.bitrate,
-                        audioBean.sampleRate,
-                        outFile.absolutePath.replace(".mp3", "_lame.mp3")
-                    )
-                    lameUtils.encode()
-                    lameUtils.destroy()
-                    BLog.i("lame将pcm转换为MP3,已完成")
+                    pcmTransitionMp3(File(outFile.absolutePath.replace(".mp3", ".pcm")), File(outFile.absolutePath.replace(".mp3", "_lame.mp3")))
                 })
         }
 
@@ -173,6 +193,37 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
         setupSeekBar(audioBean.durationOfMicroseconds)
     }
 
+
+    private fun pcmTransitionMp3(inFile: File, outFile: File) {
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                val lameUtils = LameUtils()
+                BLog.i("lame将pcm转换为MP3,准备开始")
+                lameUtils.init(
+                    inFile.absolutePath,
+                    audioBean.channelCount,
+                    audioBean.bitrate,
+                    audioBean.sampleRate,
+                    outFile.absolutePath
+                )
+                lameUtils.encode(object : LameUtils.Callback {
+                    override fun onProgress(progress: Long, max: Long) {
+                        BLog.i("pcm转MP3进度:${progress}/${max},当前线程:${Thread.currentThread().name}")
+
+                        handler.sendMessage(handler.obtainMessage().apply {
+                            this.what = MSG_TYPE_PCM_TRANSITION_MP3
+                            this.obj = progress.toDouble() / max
+                        })
+                    }
+                })
+                lameUtils.destroy()
+                BLog.i("lame将pcm转换为MP3,已完成")
+            }
+        }
+
+    }
+
+
     /**
      * 设置进度条的总长度
      */
@@ -209,7 +260,7 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
 
     override fun onDestroy() {
         super.onDestroy()
-        dialog.dismiss()
+        clipDialog.dismiss()
     }
 }
 

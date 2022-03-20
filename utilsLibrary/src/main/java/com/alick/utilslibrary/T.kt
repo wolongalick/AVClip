@@ -1,5 +1,6 @@
 package com.alick.utilslibrary
 
+import android.os.Looper
 import android.widget.Toast
 
 /**
@@ -10,7 +11,14 @@ import android.widget.Toast
 class T {
     companion object{
         fun show(msg:String){
-            Toast.makeText(AppHolder.getApp(),msg,Toast.LENGTH_SHORT).show()
+            if(Looper.myLooper() == Looper.getMainLooper()){
+                Toast.makeText(AppHolder.getApp(),msg,Toast.LENGTH_SHORT).show()
+            }else{
+                val handler=WeakHandler(Looper.getMainLooper())
+                handler.post {
+                    Toast.makeText(AppHolder.getApp(),msg,Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }
