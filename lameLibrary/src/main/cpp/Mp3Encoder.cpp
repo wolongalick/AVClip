@@ -5,14 +5,9 @@
 #include "Mp3Encoder.h"
 #include "CxwLog.h"
 
-Mp3Encoder::Mp3Encoder() {
+Mp3Encoder::Mp3Encoder() = default;
 
-
-}
-
-Mp3Encoder::~Mp3Encoder() {
-
-}
+Mp3Encoder::~Mp3Encoder() = default;
 
 int Mp3Encoder::Init(const char *pcmFilePath, int channels, int bitRate, int sampleRate,
                      const char *mp3FilePath) {
@@ -43,17 +38,17 @@ long getFileSize(FILE *fp) {
 
 void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
 //    int bufferSize = 1024 * 256;
-    int bufferSize = (int)(lame_get_in_samplerate(lameClient) * 1.25) + 7200 ;
-    LOGI("bufferSize长度:%d", bufferSize);
+    int bufferSize = (int) (lame_get_in_samplerate(lameClient) * 1.25) + 7200;
+    LOGI("bufferSize长度:%d", bufferSize)
 //    MPEG1:num_samples*(bitrate/8)/samplerate + 4*1152*(bitrate/8)/samplerate + 512
 //    MPEG2:num_samples*(bitrate/8)/samplerate + 4*576*(bitrate/8)/samplerate + 256
 
 
-    short *buffer = new short[bufferSize / 2];
-    short *leftBuffer = new short[bufferSize / 4];
-    short *rightBuffer = new short[bufferSize / 4];
-    unsigned char *mp3_buffer = new unsigned char[bufferSize];
-    size_t readBufferSize = 0;
+    auto *buffer = new short[bufferSize / 2];
+    auto *leftBuffer = new short[bufferSize / 4];
+    auto *rightBuffer = new short[bufferSize / 4];
+    auto *mp3_buffer = new unsigned char[bufferSize];
+    size_t readBufferSize;
 
     long fileSize = getFileSize(pcmFile);
     LOGI("文件总大小:%ld", fileSize)
@@ -70,7 +65,7 @@ void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
                 rightBuffer[i / 2] = buffer[i];
             }
         }
-        size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, readBufferSize / 2, mp3_buffer, bufferSize);
+        size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, (int) readBufferSize / 2, mp3_buffer, bufferSize);
         fwrite(mp3_buffer, 1, wroteSize, mp3File);
         //将读文件的进度,回调给应用层
         env->CallVoidMethod(on_progress, invokeJmethodID, (jlong) ftell(pcmFile), (jlong) fileSize);

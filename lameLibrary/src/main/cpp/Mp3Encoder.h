@@ -11,9 +11,9 @@
 
 class Mp3Encoder {
 private:
-    FILE* pcmFile;
-    FILE* mp3File;
-    lame_t lameClient;
+    FILE* pcmFile{};
+    FILE* mp3File{};
+    lame_t lameClient{};
 public:
     Mp3Encoder();
     ~Mp3Encoder();
