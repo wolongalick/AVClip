@@ -10,6 +10,7 @@ import com.alick.utilslibrary.*
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 
 /**
  * @author 崔兴旺
@@ -26,7 +27,7 @@ class AudioClipUtils {
          * 裁剪
          */
         @SuppressLint("WrongConstant")
-        fun clip(inFile: File, outFile: File, beginMicroseconds: Long, endMicroseconds: Long, onProgress: (progress: Long, max: Long) -> Unit) {
+        fun clip(inFile: File, outFile: File, beginMicroseconds: Long, endMicroseconds: Long, onProgress: (progress: Long, max: Long) -> Unit, onFinished: () -> Unit) {
             val pcmFile = File(outFile.parentFile, outFile.name.replace(".mp3", ".pcm"))
 
             val mediaExtractor = MediaExtractor()
@@ -71,75 +72,83 @@ class AudioClipUtils {
             //启动解码器
             mediaCodec.start()
 
-            val info = MediaCodec.BufferInfo()
             var outputBufferIndex = -1
-            val fileName = TimeUtils.getCurrentTime() + ".txt"
+            val inputBufferInfo = MediaCodec.BufferInfo()
+            val outputBufferInfo = MediaCodec.BufferInfo()
             while (true) {
-                val dequeueInputIndex = mediaCodec.dequeueInputBuffer(10 * 1000)
-                BLog.i("dequeueInputIndex:${dequeueInputIndex}")
+                val index = mediaCodec.dequeueInputBuffer(10 * 1000)
+                BLog.i("dequeueInputIndex:${index}")
 
-                if (dequeueInputIndex >= 0) {
+                if (index >= 0) {
+                    var isEndOfStream = false
                     val sampleTimeUs = mediaExtractor.sampleTime//时间戳,单位:微秒
                     BLog.i("sampleTimeUs:${sampleTimeUs}")
-
-                    if (sampleTimeUs == -1L) {
-                        //结束
-                        break
+                    when {
+                        sampleTimeUs != -1L && sampleTimeUs < beginMicroseconds -> {
+                            //如果读取的时间戳小于设置的截取起始时间戳,则忽略,避免浪费时间
+                            mediaExtractor.advance()//读取下一帧数据
+                            break
+                        }
+                        sampleTimeUs == -1L || sampleTimeUs >= endMicroseconds -> {
+                            isEndOfStream = true
+                        }
+                        else -> {
+                            onProgress(sampleTimeUs - beginMicroseconds, endMicroseconds - beginMicroseconds)
+                        }
                     }
-                    if (sampleTimeUs < beginMicroseconds) {
-                        //如果读取的时间戳小于设置的截取起始时间戳,则忽略,避免浪费时间
-                        mediaExtractor.advance()//读取下一帧数据
-                        continue
-                    }
 
-                    if (sampleTimeUs >= endMicroseconds) {
-                        onProgress(endMicroseconds - beginMicroseconds, endMicroseconds - beginMicroseconds)
-                        break
-                    }
-                    onProgress(sampleTimeUs - beginMicroseconds, endMicroseconds - beginMicroseconds)
-
-                    info.size = mediaExtractor.readSampleData(buffer, 0)
-                    info.presentationTimeUs = sampleTimeUs
-                    info.flags = mediaExtractor.sampleFlags
+                    inputBufferInfo.size = mediaExtractor.readSampleData(buffer, 0)
+                    inputBufferInfo.presentationTimeUs = sampleTimeUs
+                    inputBufferInfo.flags = mediaExtractor.sampleFlags
 
                     val content = ByteArray(buffer.remaining())
                     buffer.get(content)
-                    //将二进制数据转换为16进制,并保存到文件,方便查看
-                    /*FileUtils.writeContent(
-                        File(dir, fileName),
-                        true,
-                        content
-                    )*/
 
-                    val inputBuffer = mediaCodec.getInputBuffer(dequeueInputIndex)
+                    val inputBuffer = mediaCodec.getInputBuffer(index)
                     inputBuffer!!.put(content)
-                    mediaCodec.queueInputBuffer(dequeueInputIndex, 0, info.size, info.presentationTimeUs, info.flags)
+                    if (isEndOfStream) {
+                        mediaCodec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    } else {
+                        mediaCodec.queueInputBuffer(index, 0, inputBufferInfo.size, inputBufferInfo.presentationTimeUs, inputBufferInfo.flags)
+                    }
 
                     //释放上一帧的压缩数据
                     mediaExtractor.advance()
                 }
 
-                outputBufferIndex = mediaCodec.dequeueOutputBuffer(info, 100_000)
+                outputBufferIndex = mediaCodec.dequeueOutputBuffer(outputBufferInfo, 0)
                 BLog.i("outputBufferIndex:${outputBufferIndex}")
                 while (outputBufferIndex >= 0) {
                     BLog.i("outputBufferIndex:${outputBufferIndex}")
                     val decodeOutputBuffer: ByteBuffer? = mediaCodec.getOutputBuffer(outputBufferIndex)
                     writeChannel.write(decodeOutputBuffer)
                     mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
-                    outputBufferIndex = mediaCodec.dequeueOutputBuffer(info, 100_000)
+                    outputBufferIndex = mediaCodec.dequeueOutputBuffer(outputBufferInfo, 0)
+                    if (outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
+                        finish(writeChannel, mediaExtractor, mediaCodec, sampleRate, channelCount, encoding, pcmFile, outFile)
+                        onFinished()
+                        return
+                    }
                 }
             }
+        }
+
+        private fun finish(
+            writeChannel: FileChannel,
+            mediaExtractor: MediaExtractor,
+            mediaCodec: MediaCodec,
+            sampleRate: Int,
+            channelCount: Int,
+            encoding: Int,
+            pcmFile: File,
+            outFile: File
+        ) {
             BLog.i("关闭、释放资源")
             writeChannel.close()
             mediaExtractor.release()
             mediaCodec.stop()
             mediaCodec.release()
 
-            BLog.i("准备将pcm转换为MP3");
-            //将pcm数据转换为mp3封装格式
-            val pcmToWavUtil = PcmToWavUtil(sampleRate, AudioFormat.CHANNEL_IN_STEREO, channelCount, encoding)
-            pcmToWavUtil.pcmToWav(pcmFile.absolutePath, outFile.absolutePath)
-            BLog.i("将pcm转换为MP3完毕")
         }
     }
 

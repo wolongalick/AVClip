@@ -97,25 +97,27 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
                         File(viewBinding.etSrcFilePath.text.toString().trim()),
                         outFile,
                         (viewBinding.sbBegin.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
-                        (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
-                    ) { progress: Long, max: Long ->
+                        (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(), onProgress = { progress: Long, max: Long ->
+                            launch {
+                                withContext(Dispatchers.Main) {
+                                    BLog.i("处理进度,progress:${progress},max:${max}")
+                                    dialog.progress = (progress.toDouble() / max * maxProgress).toInt()
+                                    if (!dialog.isShowing && progress < max) {
+                                        dialog.show()
+                                    }
+                                }
+                            }
 
-                        launch {
-                            withContext(Dispatchers.Main) {
-                                BLog.i("处理进度,progress:${progress},max:${max}")
-                                dialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                                if (!dialog.isShowing && progress < max) {
-                                    dialog.show()
-                                } else if (dialog.isShowing && progress >= max) {
+                        }, onFinished = {
+                            launch {
+                                withContext(Dispatchers.Main) {
                                     dialog.hide()
                                     //截取完成,输出所耗时长和文件输出路径
                                     viewBinding.tvSpendTimeValue.text = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                                     viewBinding.tvOutputPathValue.text = outFile.absolutePath
                                 }
                             }
-                        }
-
-                    }
+                        })
                 }
             }
         }
