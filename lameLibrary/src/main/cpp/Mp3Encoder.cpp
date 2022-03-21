@@ -42,11 +42,17 @@ long getFileSize(FILE *fp) {
 
 
 void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
-    int buffersize = 1024 * 256;
-    short *buffer = new short[buffersize / 2];
-    short *leftBuffer = new short[buffersize / 4];
-    short *rightBuffer = new short[buffersize / 4];
-    unsigned char *mp3_buffer = new unsigned char[buffersize];
+//    int bufferSize = 1024 * 256;
+    int bufferSize = ((int)(lame_get_in_samplerate(lameClient) * 1.25) + 7200) * 2;
+    LOGI("bufferSize长度:%d", bufferSize);
+//    MPEG1:num_samples*(bitrate/8)/samplerate + 4*1152*(bitrate/8)/samplerate + 512
+//    MPEG2:num_samples*(bitrate/8)/samplerate + 4*576*(bitrate/8)/samplerate + 256
+
+
+    short *buffer = new short[bufferSize / 2];
+    short *leftBuffer = new short[bufferSize / 4];
+    short *rightBuffer = new short[bufferSize / 4];
+    unsigned char *mp3_buffer = new unsigned char[bufferSize];
     size_t readBufferSize = 0;
 
     long fileSize = getFileSize(pcmFile);
@@ -55,7 +61,7 @@ void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
     jmethodID invokeJmethodID = env->GetMethodID(function2Jclass, "onProgress", "(JJ)V");
     LOGI("invokeJmethodID:%d", invokeJmethodID != NULL)
 
-    while ((readBufferSize = fread(buffer, 2, buffersize / 2, pcmFile)) > 0) {
+    while ((readBufferSize = fread(buffer, 2, bufferSize / 2, pcmFile)) > 0) {
         LOGI("读取的readBufferSize:%d,ftell:%ld", readBufferSize, ftell(pcmFile))
         for (int i = 0; i < readBufferSize; ++i) {
             if (i % 2 == 0) {
@@ -64,10 +70,10 @@ void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
                 rightBuffer[i / 2] = buffer[i];
             }
         }
-        size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, readBufferSize / 2, mp3_buffer, buffersize);
+        size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, readBufferSize / 2, mp3_buffer, bufferSize);
         fwrite(mp3_buffer, 1, wroteSize, mp3File);
         //将读文件的进度,回调给应用层
-        env->CallVoidMethod(on_progress, invokeJmethodID, (jlong)ftell(pcmFile),(jlong) fileSize);
+        env->CallVoidMethod(on_progress, invokeJmethodID, (jlong) ftell(pcmFile), (jlong) fileSize);
     }
 
     delete[] buffer;
