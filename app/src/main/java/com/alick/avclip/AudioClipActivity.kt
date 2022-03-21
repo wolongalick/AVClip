@@ -60,9 +60,9 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
                 MSG_TYPE_PCM_TRANSITION_MP3 -> {
                     val process = (maxProgress * ((msg.obj as Double))).toInt()
                     pcmTransitionMp3Dialog.progress = process
-                    if(process==maxProgress){
+                    if (process == maxProgress) {
                         pcmTransitionMp3Dialog.hide()
-                    }else if (!pcmTransitionMp3Dialog.isShowing) {
+                    } else if (!pcmTransitionMp3Dialog.isShowing) {
                         pcmTransitionMp3Dialog.show()
                     }
                 }
@@ -120,9 +120,10 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
             val beginTime = System.currentTimeMillis()
 
             val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), TimeUtils.getCurrentTime() + ".mp3")
-            AudioClipUtils.clip(
+            AudioClipUtils(
                 File(viewBinding.etSrcFilePath.text.toString().trim()),
-                outFile,
+                outFile
+            ).clip(
                 (viewBinding.sbBegin.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
                 (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
                 onProgress = { progress: Long, max: Long ->
