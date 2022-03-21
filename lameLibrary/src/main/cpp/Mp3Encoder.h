@@ -19,6 +19,7 @@ public:
     ~Mp3Encoder();
     int Init(const char* pcmFilePath,int channels,int bitRate,int sampleRate,const char* mp3FilePath);
     void Encode(JNIEnv *env, jobject on_progress);
+    void Encode(int readBufferSize,short *leftBuffer,short *rightBuffer,unsigned char *mp3buf,const int mp3buf_size);
     void Destroy();
 };
 

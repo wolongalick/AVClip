@@ -87,3 +87,8 @@ void Mp3Encoder::Destroy() {
         lame_close(lameClient);
     }
 }
+
+void Mp3Encoder::Encode(int readBufferSize, short *leftBuffer, short *rightBuffer, unsigned char *mp3buf, const int mp3buf_size) {
+    size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, (int) readBufferSize / 2, mp3buf, mp3buf_size);
+    fwrite(mp3buf, 1, wroteSize, mp3File);
+}

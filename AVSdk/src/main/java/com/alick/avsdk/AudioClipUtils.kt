@@ -6,11 +6,16 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.os.Build
-import com.alick.utilslibrary.*
+import com.alick.lamelibrary.LameUtils
+import com.alick.utilslibrary.AppHolder
+import com.alick.utilslibrary.BLog
+import com.alick.utilslibrary.FileUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
 
 /**
  * @author 崔兴旺
@@ -20,10 +25,41 @@ import java.nio.channels.FileChannel
 class AudioClipUtils(private val inFile: File, private val outFile: File) {
 
 
-    val dir = AppHolder.getApp().getExternalFilesDir("output")
-    var sampleRate: Int = 0
-    var bitRate: Int = 0
-    var channelCount: Int = 0
+    private val dir = AppHolder.getApp().getExternalFilesDir("output")
+    private var sampleRate: Int = 0
+    private var bitRate: Int = 0
+    private var channelCount: Int = 0
+    private var isEncoding = false
+
+
+    private val mp3Buffer: ByteArray = ByteArray(1024 * 256)
+
+    private val lameUtils by lazy {
+        LameUtils().apply {
+            init(
+                outFile.absolutePath.replace(".mp3", ".pcm"), channelCount, bitRate, sampleRate, outFile.absolutePath.replace(".mp3", "_lame.mp3")
+            )
+        }
+    }
+
+    private val queue: BlockingQueue<PcmTask> by lazy {
+        ArrayBlockingQueue(50)
+    }
+
+    private val pcmToMp3Thread: Thread by lazy {
+        Thread {
+            isEncoding = true
+            while (!isEncoding) {
+                val pcmTask = queue.take()
+                lameUtils.encodeChunk(pcmTask.readSize, pcmTask.shortArray, pcmTask.shortArray, mp3Buffer, mp3Buffer.size)
+
+            }
+        }
+    }
+
+    private class PcmTask(val shortArray: ShortArray, val readSize: Int) {
+
+    }
 
     /**
      * 裁剪
@@ -170,7 +206,13 @@ class AudioClipUtils(private val inFile: File, private val outFile: File) {
         mediaCodec.start()
     }
 
-    private fun finish(
+
+    private fun addPcmTask(shortArray: ShortArray, readSize: Int) {
+        queue.add(PcmTask(shortArray.clone(), readSize))
+    }
+
+
+    fun finish(
         writeChannel: FileChannel,
         mediaExtractor: MediaExtractor,
         mediaCodec: MediaCodec,

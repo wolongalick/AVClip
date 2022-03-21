@@ -43,3 +43,19 @@ JNIEXPORT void JNICALL
 Java_com_alick_lamelibrary_LameUtils_destroy(JNIEnv *env, jobject instance) {
     encoder->Destroy();
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_alick_lamelibrary_LameUtils_encodeChunk(JNIEnv *env, jobject thiz, jint read_buffer_size, jshortArray left_buffer, jshortArray right_buffer,
+                                                 jbyteArray mp3buf, jint mp3buf_size) {
+    jshort *leftJShort = env->GetShortArrayElements(left_buffer, JNI_FALSE);
+    jshort *rightJShort = env->GetShortArrayElements(right_buffer, JNI_FALSE);
+
+    jbyte *mp3bufByte = env->GetByteArrayElements(mp3buf, JNI_FALSE);
+    encoder->Encode(read_buffer_size, leftJShort, rightJShort, reinterpret_cast<unsigned char *>(mp3bufByte), mp3buf_size);
+
+    env->ReleaseShortArrayElements(left_buffer, leftJShort, 0);
+    env->ReleaseShortArrayElements(right_buffer, rightJShort, 0);
+    env->ReleaseByteArrayElements(mp3buf, mp3bufByte, 0);
+
+
+}
