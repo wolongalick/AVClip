@@ -42,8 +42,8 @@ long getFileSize(FILE *fp) {
 
 
 void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
-//    int bufferSize = 1024 * 256;
-    int bufferSize = ((int)(lame_get_in_samplerate(lameClient) * 1.25) + 7200) * 2;
+    int bufferSize = 1024 * 256;
+//    int bufferSize = ((int)(lame_get_in_samplerate(lameClient) * 1.25) + 7200) * 2;
     LOGI("bufferSize长度:%d", bufferSize);
 //    MPEG1:num_samples*(bitrate/8)/samplerate + 4*1152*(bitrate/8)/samplerate + 512
 //    MPEG2:num_samples*(bitrate/8)/samplerate + 4*576*(bitrate/8)/samplerate + 256
