@@ -184,12 +184,6 @@ class AudioClipUtils {
             mediaExtractor.release()
             mediaCodec.stop()
             mediaCodec.release()
-
-            BLog.i("准备将pcm转换为MP3");
-            //将pcm数据转换为mp3封装格式
-            val pcmToWavUtil = PcmToWavUtil(sampleRate, AudioFormat.CHANNEL_IN_STEREO, channelCount, encoding)
-            pcmToWavUtil.pcmToWav(pcmFile.absolutePath, outFile.absolutePath)
-            BLog.i("将pcm转换为MP3完毕")
         }
 
     }

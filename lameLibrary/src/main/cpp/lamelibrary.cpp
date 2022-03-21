@@ -13,7 +13,7 @@ Java_com_alick_lamelibrary_LameUtils_stringFromJNI(
 }
 
 
-Mp3Encoder *encoder = NULL;
+Mp3Encoder *encoder = nullptr;
 
 extern "C"
 JNIEXPORT void JNICALL
