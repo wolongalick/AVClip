@@ -62,7 +62,6 @@ class AudioClipUtils(private val inFile: File, private val outFile: File, val on
                 val outputByteBuffer = bufferTask.byteBuffer
                 val wroteSize = writeChannel.write(outputByteBuffer)
                 cacheBufferSize += wroteSize
-                BLog.i("wroteSize:${wroteSize},cacheBufferSize:${cacheBufferSize},bufferSize:${bufferSize}")
                 if (bufferTask.isEndOfStream || cacheBufferSize >= bufferSize) {
                     //只有当达到流末尾时,或新增的文件大小达到一定程度时,才让lame来编码
                     lameUtils.encode(bufferTask.isEndOfStream)
