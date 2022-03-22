@@ -11,15 +11,26 @@
 
 class Mp3Encoder {
 private:
-    FILE* pcmFile{};
-    FILE* mp3File{};
+    FILE *pcmFile{};
+    FILE *mp3File{};
     lame_t lameClient{};
+
+    long bufferSize = 1024 * 256;
+    short *buffer = new short[bufferSize / 2];
+    short *leftBuffer = new short[bufferSize / 4];
+    short *rightBuffer = new short[bufferSize / 4];
+    unsigned char *mp3_buffer = new unsigned char[bufferSize];
 public:
     Mp3Encoder();
+
     ~Mp3Encoder();
-    int Init(const char* pcmFilePath,int channels,int bitRate,int sampleRate,const char* mp3FilePath);
-    void Encode(JNIEnv *env, jobject on_progress);
-    void Encode(int readBufferSize,short *leftBuffer,short *rightBuffer,unsigned char *mp3buf,const int mp3buf_size);
+
+    int Init(const char *pcmFilePath, int channels, int bitRate, int sampleRate, const char *mp3FilePath);
+
+    int Encode(bool end_of_stream);
+
+    void Encode(int readBufferSize, short *leftBuffer, short *rightBuffer, unsigned char *mp3buf, const int mp3buf_size);
+
     void Destroy();
 };
 

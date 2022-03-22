@@ -22,17 +22,18 @@ import java.util.concurrent.BlockingQueue
  * @description 音频裁剪工具类
  * @date 2022/3/11 22:05
  */
-class AudioClipUtils(private val inFile: File, private val outFile: File) {
+class AudioClipUtils(private val inFile: File, private val outFile: File, val onProgress: (progress: Long, max: Long) -> Unit, val onFinished: () -> Unit) {
 
-
+    private val bufferSize = 1024 * 256
     private val dir = AppHolder.getApp().getExternalFilesDir("output")
     private var sampleRate: Int = 0
     private var bitRate: Int = 0
     private var channelCount: Int = 0
     private var isEncoding = false
+    private val mediaExtractor = MediaExtractor()
+    private lateinit var mediaCodec: MediaCodec
 
-
-    private val mp3Buffer: ByteArray = ByteArray(1024 * 256)
+    private class BufferTask(val byteBuffer: ByteBuffer, val isEndOfStream: Boolean, val outputBufferIndex: Int)
 
     private val lameUtils by lazy {
         LameUtils().apply {
@@ -42,34 +43,51 @@ class AudioClipUtils(private val inFile: File, private val outFile: File) {
         }
     }
 
-    private val queue: BlockingQueue<PcmTask> by lazy {
-        ArrayBlockingQueue(50)
+    private val writeChannel by lazy {
+        val pcmFile = File(outFile.parentFile, outFile.name.replace(".mp3", ".pcm"))
+        FileUtils.createFile(pcmFile)
+        FileOutputStream(pcmFile).channel
+    }
+
+    private val queue: BlockingQueue<BufferTask> by lazy {
+        ArrayBlockingQueue(5000)
     }
 
     private val pcmToMp3Thread: Thread by lazy {
+        var cacheBufferSize = 0
         Thread {
             isEncoding = true
-            while (!isEncoding) {
-                val pcmTask = queue.take()
-                lameUtils.encodeChunk(pcmTask.readSize, pcmTask.shortArray, pcmTask.shortArray, mp3Buffer, mp3Buffer.size)
+            while (isEncoding) {
+                val bufferTask = queue.take()
+                val outputByteBuffer = bufferTask.byteBuffer
+                val outputBufferIndex = bufferTask.outputBufferIndex
+                val wroteSize = writeChannel.write(outputByteBuffer)
+//                mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
+                val remaining = outputByteBuffer.remaining()
+                cacheBufferSize += wroteSize
+                BLog.i("remaining:${remaining},wroteSize:${wroteSize},cacheBufferSize:${cacheBufferSize},bufferSize:${bufferSize}")
 
+                if (bufferTask.isEndOfStream || cacheBufferSize >= bufferSize) {
+                    lameUtils.encode(bufferTask.isEndOfStream)
+                    cacheBufferSize = 0
+                }
+                if (bufferTask.isEndOfStream) {
+                    isEncoding = false
+                }
             }
+            BLog.i("pcmToMp3Thread线程结束运行")
+            lameUtils.destroy()
+            finish(writeChannel, mediaExtractor, mediaCodec)
+            onFinished()
         }
-    }
-
-    private class PcmTask(val shortArray: ShortArray, val readSize: Int) {
-
     }
 
     /**
      * 裁剪
      */
     @SuppressLint("WrongConstant")
-    fun clip(beginMicroseconds: Long, endMicroseconds: Long, onProgress: (progress: Long, max: Long) -> Unit, onFinished: () -> Unit) {
+    fun clip(beginMicroseconds: Long, endMicroseconds: Long) {
         BLog.i("开始截取,beginMicroseconds:${beginMicroseconds},endMicroseconds:${endMicroseconds}")
-        val pcmFile = File(outFile.parentFile, outFile.name.replace(".mp3", ".pcm"))
-
-        val mediaExtractor = MediaExtractor()
         mediaExtractor.setDataSource(inFile.absolutePath)
         val trackIndex = mediaExtractor.let {
             for (i in 0..it.trackCount) {
@@ -100,13 +118,10 @@ class AudioClipUtils(private val inFile: File, private val outFile: File) {
             100 * 1000
         }
 
-        FileUtils.createFile(pcmFile)
-        val writeChannel = FileOutputStream(pcmFile).channel
-
 
         val buffer = ByteBuffer.allocateDirect(maxBufferSize)
         //创建解码器
-        val mediaCodec = MediaCodec.createDecoderByType(mediaFormat.getString(MediaFormat.KEY_MIME)!!)
+        mediaCodec = MediaCodec.createDecoderByType(mediaFormat.getString(MediaFormat.KEY_MIME)!!)
 
         val inputBufferInfo = MediaCodec.BufferInfo()
 
@@ -163,20 +178,18 @@ class AudioClipUtils(private val inFile: File, private val outFile: File) {
              * 当输出缓冲区可用时调用
              *
              * @param codec     MediaCodec对象
-             * @param index     可用输出缓冲区的索引
+             * @param outputBufferIndex     可用输出缓冲区的索引
              * @param info      关于可用输出缓冲区的信息
              */
-            override fun onOutputBufferAvailable(codec: MediaCodec, index: Int, info: MediaCodec.BufferInfo) {
-                BLog.i("index:${index}--->onOutputBufferAvailable()")
-                val decodeOutputBuffer: ByteBuffer? = codec.getOutputBuffer(index)
-                BLog.i("outputBufferIndex:${index},outputBufferInfo.flags:${info.flags},outputBufferInfo.presentationTimeUs:${info.presentationTimeUs}")
-                writeChannel.write(decodeOutputBuffer)
-                codec.releaseOutputBuffer(index, false)
-
-                if (info.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
-                    finish(writeChannel, mediaExtractor, mediaCodec, sampleRate, channelCount, encoding, pcmFile, outFile)
-                    onFinished()
+            override fun onOutputBufferAvailable(codec: MediaCodec, outputBufferIndex: Int, info: MediaCodec.BufferInfo) {
+                BLog.i("index:${outputBufferIndex}--->onOutputBufferAvailable()")
+                val decodeOutputBuffer: ByteBuffer? = codec.getOutputBuffer(outputBufferIndex)
+                BLog.i("outputBufferIndex:${outputBufferIndex},outputBufferInfo.flags:${info.flags},outputBufferInfo.presentationTimeUs:${info.presentationTimeUs}")
+                decodeOutputBuffer?.let {
+                    val tempBuffer: ByteBuffer = clone(it)
+                    addPcmTask(BufferTask(tempBuffer, info.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM, outputBufferIndex))
                 }
+                mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
             }
 
             /**
@@ -200,6 +213,8 @@ class AudioClipUtils(private val inFile: File, private val outFile: File) {
             }
         })
 
+        pcmToMp3Thread.start()
+
         //配置解码器
         mediaCodec.configure(mediaFormat, null, null, 0)
         //启动解码器
@@ -207,20 +222,14 @@ class AudioClipUtils(private val inFile: File, private val outFile: File) {
     }
 
 
-    private fun addPcmTask(shortArray: ShortArray, readSize: Int) {
-        queue.add(PcmTask(shortArray.clone(), readSize))
+    private fun addPcmTask(bufferTask: BufferTask) {
+        queue.put(bufferTask)
     }
 
-
-    fun finish(
+    private fun finish(
         writeChannel: FileChannel,
         mediaExtractor: MediaExtractor,
-        mediaCodec: MediaCodec,
-        sampleRate: Int,
-        channelCount: Int,
-        encoding: Int,
-        pcmFile: File,
-        outFile: File
+        mediaCodec: MediaCodec
     ) {
         BLog.i("关闭、释放资源")
         writeChannel.close()
@@ -229,5 +238,12 @@ class AudioClipUtils(private val inFile: File, private val outFile: File) {
         mediaCodec.release()
     }
 
-
+    fun clone(original: ByteBuffer): ByteBuffer {
+        val clone = ByteBuffer.allocate(original.capacity())
+        original.rewind() //copy from the beginning
+        clone.put(original)
+        original.rewind()
+        clone.flip()
+        return clone
+    }
 }

@@ -21,6 +21,7 @@ int Mp3Encoder::Init(const char *pcmFilePath, int channels, int bitRate, int sam
             lame_set_out_samplerate(lameClient, sampleRate);
             lame_set_num_channels(lameClient, channels);
             lame_set_brate(lameClient, bitRate / 1000);
+            lame_set_quality(lameClient,7);//7的音质最好
             lame_init_params(lameClient);
             ret = 0;
         }
@@ -35,29 +36,34 @@ long getFileSize(FILE *fp) {
     return size;
 }
 
+long getUnreadFileSize(FILE *fp) {
+    long currentPosition = ftell(fp);
+    fseek(fp, 0L, SEEK_END);
+    long endPosition = ftell(fp);
+    long unreadFileSize = endPosition - currentPosition;
+    //回到原位
+    fseek(fp, currentPosition, SEEK_SET);
+    return unreadFileSize;
+}
 
-void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
-//    int bufferSize = 1024 * 256;
-    int bufferSize = (int) (lame_get_in_samplerate(lameClient) * 1.25) + 7200;
-    LOGI("bufferSize长度:%d", bufferSize)
-//    MPEG1:num_samples*(bitrate/8)/samplerate + 4*1152*(bitrate/8)/samplerate + 512
-//    MPEG2:num_samples*(bitrate/8)/samplerate + 4*576*(bitrate/8)/samplerate + 256
 
-
-    auto *buffer = new short[bufferSize / 2];
-    auto *leftBuffer = new short[bufferSize / 4];
-    auto *rightBuffer = new short[bufferSize / 4];
-    auto *mp3_buffer = new unsigned char[bufferSize];
+int Mp3Encoder::Encode(bool end_of_stream) {
     size_t readBufferSize;
+    long unreadFileSize = getUnreadFileSize(pcmFile);
+    if (unreadFileSize < bufferSize) {
+        if(end_of_stream){
+            LOGE("未读文件大小:%ld,不足%ld,但是由于到达了流末尾,因此继续编码,无需return", unreadFileSize, bufferSize)
+        }else{
+            LOGE("未读文件大小:%ld,不足%ld,", unreadFileSize, bufferSize)
+            return -2;
+        }
+    } else {
+        LOGI("未读文件大小:%ld,满足%ld", unreadFileSize, bufferSize)
+    }
 
-    long fileSize = getFileSize(pcmFile);
-    LOGI("文件总大小:%ld", fileSize)
-    jclass function2Jclass = env->FindClass("com/alick/lamelibrary/LameUtils$Callback");
-    jmethodID invokeJmethodID = env->GetMethodID(function2Jclass, "onProgress", "(JJ)V");
-    LOGI("invokeJmethodID:%d", invokeJmethodID != NULL)
 
+    LOGI("pcm编码前文件position:%ld", ftell(pcmFile))
     while ((readBufferSize = fread(buffer, 2, bufferSize / 2, pcmFile)) > 0) {
-        LOGI("读取的readBufferSize:%d,ftell:%ld", readBufferSize, ftell(pcmFile))
         for (int i = 0; i < readBufferSize; ++i) {
             if (i % 2 == 0) {
                 leftBuffer[i / 2] = buffer[i];
@@ -67,15 +73,10 @@ void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
         }
         size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, (int) readBufferSize / 2, mp3_buffer, bufferSize);
         fwrite(mp3_buffer, 1, wroteSize, mp3File);
-        //将读文件的进度,回调给应用层
-        env->CallVoidMethod(on_progress, invokeJmethodID, (jlong) ftell(pcmFile), (jlong) fileSize);
     }
+    LOGI("pcm编码后文件position:%ld", ftell(pcmFile))
 
-    delete[] buffer;
-    delete[] leftBuffer;
-    delete[] rightBuffer;
-    delete[] mp3_buffer;
-
+    return 0;
 }
 
 void Mp3Encoder::Destroy() {
@@ -86,6 +87,10 @@ void Mp3Encoder::Destroy() {
         fclose(mp3File);
         lame_close(lameClient);
     }
+    delete[] buffer;
+    delete[] leftBuffer;
+    delete[] rightBuffer;
+    delete[] mp3_buffer;
 }
 
 void Mp3Encoder::Encode(int readBufferSize, short *leftBuffer, short *rightBuffer, unsigned char *mp3buf, const int mp3buf_size) {

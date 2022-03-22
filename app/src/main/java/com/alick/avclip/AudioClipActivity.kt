@@ -17,7 +17,6 @@ import com.alick.avsdk.MediaParser
 import com.alick.avsdk.bean.AudioBean
 import com.alick.commonlibrary.BaseActivity
 import com.alick.commonlibrary.UriUtils
-import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -122,10 +121,7 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
             val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), TimeUtils.getCurrentTime() + ".mp3")
             AudioClipUtils(
                 File(viewBinding.etSrcFilePath.text.toString().trim()),
-                outFile
-            ).clip(
-                (viewBinding.sbBegin.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
-                (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
+                outFile,
                 onProgress = { progress: Long, max: Long ->
                     BLog.i("处理进度,progress:${progress},max:${max}")
                     clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
@@ -133,13 +129,21 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
                         clipDialog.show()
                     }
                 }, onFinished = {
-                    clipDialog.hide()
-                    //截取完成,输出所耗时长和文件输出路径
-                    viewBinding.tvSpendTimeValue.text = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.tvOutputPathValue.text = outFile.absolutePath
-
-                    pcmTransitionMp3(File(outFile.absolutePath.replace(".mp3", ".pcm")), File(outFile.absolutePath.replace(".mp3", "_lame.mp3")))
-                })
+                    lifecycleScope.launch {
+                        withContext(Dispatchers.Main) {
+                            clipDialog.hide()
+                            //截取完成,输出所耗时长和文件输出路径
+                            val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
+                            viewBinding.tvSpendTimeValue.text = duration
+                            BLog.i("总耗时:${duration}")
+                            viewBinding.tvOutputPathValue.text = outFile.absolutePath
+                        }
+                    }
+                }
+            ).clip(
+                (viewBinding.sbBegin.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong(),
+                (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong()
+            )
         }
 
         viewBinding.btnCopy.setOnClickListener {
@@ -193,37 +197,6 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
         viewBinding.etInfo.setText(sb.toString())
         setupSeekBar(audioBean.durationOfMicroseconds)
     }
-
-
-    private fun pcmTransitionMp3(inFile: File, outFile: File) {
-        lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                val lameUtils = LameUtils()
-                BLog.i("lame将pcm转换为MP3,准备开始")
-                lameUtils.init(
-                    inFile.absolutePath,
-                    audioBean.channelCount,
-                    audioBean.bitrate,
-                    audioBean.sampleRate,
-                    outFile.absolutePath
-                )
-                lameUtils.encode(object : LameUtils.Callback {
-                    override fun onProgress(progress: Long, max: Long) {
-                        BLog.i("pcm转MP3进度:${progress}/${max},当前线程:${Thread.currentThread().name}")
-
-                        handler.sendMessage(handler.obtainMessage().apply {
-                            this.what = MSG_TYPE_PCM_TRANSITION_MP3
-                            this.obj = progress.toDouble() / max
-                        })
-                    }
-                })
-                lameUtils.destroy()
-                BLog.i("lame将pcm转换为MP3,已完成")
-            }
-        }
-
-    }
-
 
     /**
      * 设置进度条的总长度

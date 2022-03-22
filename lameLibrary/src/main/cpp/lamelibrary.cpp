@@ -34,12 +34,6 @@ Java_com_alick_lamelibrary_LameUtils_init(JNIEnv *env, jobject instance, jstring
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_alick_lamelibrary_LameUtils_encode(JNIEnv *env, jobject instance, jobject on_progress) {
-    encoder->Encode(env, on_progress);
-}
-
-extern "C"
-JNIEXPORT void JNICALL
 Java_com_alick_lamelibrary_LameUtils_destroy(JNIEnv *env, jobject instance) {
     encoder->Destroy();
 }
@@ -58,4 +52,9 @@ Java_com_alick_lamelibrary_LameUtils_encodeChunk(JNIEnv *env, jobject thiz, jint
     env->ReleaseByteArrayElements(mp3buf, mp3bufByte, 0);
 
 
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_alick_lamelibrary_LameUtils_encode(JNIEnv *env, jobject thiz, jboolean end_of_stream) {
+    return encoder->Encode(end_of_stream);
 }
