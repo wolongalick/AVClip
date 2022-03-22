@@ -1,10 +1,14 @@
 package com.alick.commonlibrary
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewbinding.ViewBinding
+import com.google.android.material.appbar.MaterialToolbar
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.ParameterizedType
 
@@ -20,6 +24,10 @@ abstract class BaseActivity<Binding : ViewBinding> : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(createView())
+
+        getMaterialToolbar()?.setNavigationOnClickListener {
+            finish()
+        }
 
         initListener()
         initData()
@@ -43,6 +51,8 @@ abstract class BaseActivity<Binding : ViewBinding> : AppCompatActivity() {
         }
         return viewBinding.root
     }
+
+    protected abstract fun getMaterialToolbar(): MaterialToolbar?
 
     /**
      * 初始化监听事件

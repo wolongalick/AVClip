@@ -6,11 +6,13 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.databinding.ActivityMainBinding
 import com.alick.commonlibrary.BaseActivity
+import com.google.android.material.appbar.MaterialToolbar
 
 
-class MainActivity : BaseActivity<ActivityMainBinding>() {
+class MainActivity : BaseAVActivity<ActivityMainBinding>() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,8 +35,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     override fun initListener() {
-        viewBinding.tvAudio.setOnClickListener {
+        viewBinding.tvAudioClip.setOnClickListener {
             startActivity(Intent(this@MainActivity, AudioClipActivity::class.java))
+        }
+
+        viewBinding.tvAudioSplice.setOnClickListener {
+            startActivity(Intent(this@MainActivity, AudioSpliceActivity::class.java))
         }
     }
 
@@ -56,4 +62,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             }
         }
     }
+
+    override fun getMaterialToolbar(): MaterialToolbar? = null
 }

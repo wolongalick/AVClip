@@ -7,12 +7,19 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/tvAudio"
+        android:id="@+id/tvAudioClip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="音频裁剪"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/tvAudioSplice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="音频拼接"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAudioClip" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

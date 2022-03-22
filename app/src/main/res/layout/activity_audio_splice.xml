@@ -34,12 +34,19 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <com.alick.avclip.BaseAudioInfo
+                android:id="@+id/baseAudioInfo2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1" />
+
             <Button
                 android:id="@+id/btnBegin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="开始"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1"
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo2"
                 app:layout_constraintEnd_toEndOf="parent" />
 
             <TextView
