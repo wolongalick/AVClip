@@ -58,11 +58,11 @@ int Mp3Encoder::Encode(bool end_of_stream) {
             return -2;
         }
     } else {
-        LOGI("未读文件大小:%ld,满足%ld", unreadFileSize, bufferSize)
+//        LOGI("未读文件大小:%ld,满足%ld", unreadFileSize, bufferSize)
     }
 
 
-    LOGI("pcm编码前文件position:%ld", ftell(pcmFile))
+//    LOGI("pcm编码前文件position:%ld", ftell(pcmFile))
     while ((readBufferSize = fread(buffer, 2, bufferSize / 2, pcmFile)) > 0) {
         for (int i = 0; i < readBufferSize; ++i) {
             if (i % 2 == 0) {
@@ -74,7 +74,7 @@ int Mp3Encoder::Encode(bool end_of_stream) {
         size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, (int) readBufferSize / 2, mp3_buffer, bufferSize);
         fwrite(mp3_buffer, 1, wroteSize, mp3File);
     }
-    LOGI("pcm编码后文件position:%ld", ftell(pcmFile))
+//    LOGI("pcm编码后文件position:%ld", ftell(pcmFile))
 
     return 0;
 }

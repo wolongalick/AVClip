@@ -60,14 +60,11 @@ class AudioClipUtils(private val inFile: File, private val outFile: File, val on
             while (isEncoding) {
                 val bufferTask = queue.take()
                 val outputByteBuffer = bufferTask.byteBuffer
-                val outputBufferIndex = bufferTask.outputBufferIndex
                 val wroteSize = writeChannel.write(outputByteBuffer)
-//                mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
-                val remaining = outputByteBuffer.remaining()
                 cacheBufferSize += wroteSize
-                BLog.i("remaining:${remaining},wroteSize:${wroteSize},cacheBufferSize:${cacheBufferSize},bufferSize:${bufferSize}")
-
+                BLog.i("wroteSize:${wroteSize},cacheBufferSize:${cacheBufferSize},bufferSize:${bufferSize}")
                 if (bufferTask.isEndOfStream || cacheBufferSize >= bufferSize) {
+                    //只有当达到流末尾时,或新增的文件大小达到一定程度时,才让lame来编码
                     lameUtils.encode(bufferTask.isEndOfStream)
                     cacheBufferSize = 0
                 }
@@ -133,13 +130,12 @@ class AudioClipUtils(private val inFile: File, private val outFile: File, val on
              * @param index     可用输入缓冲区的索引
              */
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-                BLog.i("index:${index}--->onInputBufferAvailable()")
                 val inputBuffer: ByteBuffer? = codec.getInputBuffer(index)
 
                 inputBuffer?.apply {
                     var isEndOfStream = false
                     val sampleTimeUs = mediaExtractor.sampleTime//时间戳,单位:微秒
-                    BLog.i("sampleTimeUs:${sampleTimeUs}")
+//                    BLog.i("当前解码时间:${TimeFormatUtils.format((sampleTimeUs/1000_000).toInt())}")
                     when {
                         sampleTimeUs != -1L && sampleTimeUs < beginMicroseconds -> {
                             //如果读取的时间戳小于设置的截取起始时间戳,则忽略,避免浪费时间
@@ -182,10 +178,11 @@ class AudioClipUtils(private val inFile: File, private val outFile: File, val on
              * @param info      关于可用输出缓冲区的信息
              */
             override fun onOutputBufferAvailable(codec: MediaCodec, outputBufferIndex: Int, info: MediaCodec.BufferInfo) {
-                BLog.i("index:${outputBufferIndex}--->onOutputBufferAvailable()")
+//                BLog.i("index:${outputBufferIndex}--->onOutputBufferAvailable()")
                 val decodeOutputBuffer: ByteBuffer? = codec.getOutputBuffer(outputBufferIndex)
-                BLog.i("outputBufferIndex:${outputBufferIndex},outputBufferInfo.flags:${info.flags},outputBufferInfo.presentationTimeUs:${info.presentationTimeUs}")
+//                BLog.i("outputBufferIndex:${outputBufferIndex},outputBufferInfo.flags:${info.flags},outputBufferInfo.presentationTimeUs:${info.presentationTimeUs}")
                 decodeOutputBuffer?.let {
+                    //这里克隆一份新的ByteBuffer的原因是:如果不可隆,获取完ByteBuffer立即调用releaseOutputBuffer,会导致有杂音,而是用克隆出来的ByteBuffer,再releaseOutputBuffer不会有影响
                     val tempBuffer: ByteBuffer = clone(it)
                     addPcmTask(BufferTask(tempBuffer, info.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM, outputBufferIndex))
                 }

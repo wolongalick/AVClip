@@ -123,7 +123,7 @@ class AudioClipActivity : BaseActivity<ActivityAudioClipBinding>() {
                 File(viewBinding.etSrcFilePath.text.toString().trim()),
                 outFile,
                 onProgress = { progress: Long, max: Long ->
-                    BLog.i("处理进度,progress:${progress},max:${max}")
+//                    BLog.i("处理进度,progress:${progress},max:${max}")
                     clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
                     if (!clipDialog.isShowing) {
                         clipDialog.show()
