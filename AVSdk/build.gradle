@@ -31,4 +31,5 @@ android {
 
 dependencies {
     api project(path: ':utilsLibrary')
+    api project(path: ':lameLibrary')
 }

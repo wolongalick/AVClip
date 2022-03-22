@@ -2,15 +2,12 @@ package com.alick.avclip
 
 import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.alick.avclip.databinding.ActivityMainBinding
 import com.alick.commonlibrary.BaseActivity
-import com.alick.commonlibrary.UriUtils
 
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
