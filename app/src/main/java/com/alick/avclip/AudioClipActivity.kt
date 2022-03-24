@@ -6,7 +6,7 @@ import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioClipBinding
-import com.alick.avsdk.AudioClipUtils4Sync
+import com.alick.avsdk.clip.AudioClipUtils4Sync
 import com.alick.utilslibrary.*
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File

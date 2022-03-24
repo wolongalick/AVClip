@@ -5,7 +5,8 @@ import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioSpliceBinding
-import com.alick.avsdk.AudioClipUtils4Callback
+import com.alick.avsdk.clip.AudioClipUtils4Sync
+import com.alick.avsdk.splice.AudioSpliceUtils4Sync
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.StorageUtils
 import com.alick.utilslibrary.T
@@ -59,47 +60,25 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                 return@setOnClickListener
             }
             val beginTime = System.currentTimeMillis()
-
-
-            val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), TimeUtils.getCurrentTime() + ".mp3")
-            AudioClipUtils4Callback(lifecycleScope, File(viewBinding.baseAudioInfo1.getSrcFilePath()),
-                outFile,
-                viewBinding.baseAudioInfo1.getBeginMicroseconds(),
-                viewBinding.baseAudioInfo1.getEndMicroseconds(),
-                onProgress = { progress: Long, max: Long ->
-                    BLog.i("第1个MP3处理进度,progress:${progress},max:${max}")
-
-                }, onFinished = {
-                    //截取完成,输出所耗时长和文件输出路径
-                    val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.tvSpendTimeValue.text = duration
-                    BLog.i("总耗时:${duration}")
-                    viewBinding.tvOutputPathValue.text = outFile.absolutePath
-                }
-            ).clip()
-
-            Thread.sleep(1100)
-
-            val outFile2 = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), TimeUtils.getCurrentTime() + ".mp3")
-            AudioClipUtils4Callback(
-                lifecycleScope,
-                File(viewBinding.baseAudioInfo2.getSrcFilePath()),
-                outFile2,
-                viewBinding.baseAudioInfo2.getBeginMicroseconds(),
-                viewBinding.baseAudioInfo2.getEndMicroseconds(),
-                onProgress = { progress: Long, max: Long ->
-                    BLog.i("第2个MP3处理进度,progress:${progress},max:${max}")
+            val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "拼接-" + TimeUtils.getCurrentTime() + ".mp3")
+            AudioSpliceUtils4Sync(
+                lifecycleScope, mutableListOf(
+                    AudioSpliceUtils4Sync.InFileEach(
+                        File(viewBinding.baseAudioInfo1.getSrcFilePath()),
+                        viewBinding.baseAudioInfo1.getBeginMicroseconds(),
+                        viewBinding.baseAudioInfo1.getEndMicroseconds()
+                    ),
+                    AudioSpliceUtils4Sync.InFileEach(
+                        File(viewBinding.baseAudioInfo2.getSrcFilePath()),
+                        viewBinding.baseAudioInfo2.getBeginMicroseconds(),
+                        viewBinding.baseAudioInfo2.getEndMicroseconds()
+                    ),
+                ), outFile, onProgress = { progress: Long, max: Long ->
 
                 }, onFinished = {
-                    //截取完成,输出所耗时长和文件输出路径
-                    val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.tvSpendTimeValue.text = duration
-                    BLog.i("总耗时:${duration}")
-                    viewBinding.tvOutputPathValue.text = outFile2.absolutePath
-                }
-            ).clip(
 
-            )
+                }
+            ).splice()
         }
     }
 

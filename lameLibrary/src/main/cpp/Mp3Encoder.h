@@ -11,6 +11,7 @@
 
 class Mp3Encoder {
 private:
+    const char* tag= nullptr;
     FILE *pcmFile{};
     FILE *mp3File{};
     lame_t lameClient{};
@@ -25,11 +26,9 @@ public:
 
     ~Mp3Encoder();
 
-    int Init(const char *pcmFilePath, int channels, int bitRate, int sampleRate, const char *mp3FilePath);
+    int Init(const char *pcmFilePath, int channels, int bitRate, int sampleRate, const char *mp3FilePath,const char* tag);
 
     int Encode(bool end_of_stream);
-
-    void Encode(int readBufferSize, short *leftBuffer, short *rightBuffer, unsigned char *mp3buf, const int mp3buf_size);
 
     void Destroy();
 };

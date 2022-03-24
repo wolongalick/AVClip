@@ -1,4 +1,4 @@
-package com.alick.avsdk
+package com.alick.avsdk.clip
 
 import android.annotation.SuppressLint
 import android.media.MediaCodec
@@ -20,6 +20,7 @@ class AudioClipUtils4Sync(
     outFile: File,
     beginMicroseconds: Long,
     endMicroseconds: Long,
+    tag:String="AudioClipUtils4Sync",
     onProgress: (progress: Long, max: Long) -> Unit,
     onFinished: () -> Unit
 ) : AbsAudioClipUtils(
@@ -28,6 +29,7 @@ class AudioClipUtils4Sync(
     outFile,
     beginMicroseconds,
     endMicroseconds,
+    tag,
     onProgress = onProgress,
     onFinished = onFinished
 ) {
@@ -37,7 +39,7 @@ class AudioClipUtils4Sync(
      */
     @SuppressLint("WrongConstant")
     override fun clip() {
-        //运行pcm转码MP3的线程
+        //运行pcm转码MP3的协程
         runPcmToMp3Coroutine()
         lifecycleCoroutineScope.launch {
             withContext(Dispatchers.IO) {

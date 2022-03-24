@@ -19,16 +19,19 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_alick_lamelibrary_LameUtils_init(JNIEnv *env, jobject instance, jstring pcmPath_,
                                           jint audioChannels, jint bitRate, jint sampleRate,
-                                          jstring mp3Path_) {
-    const char *pcmPath = env->GetStringUTFChars(pcmPath_, nullptr);
-    const char *mp3Path = env->GetStringUTFChars(mp3Path_, nullptr);
+                                          jstring mp3Path_,jstring tag_) {
+    const char *pcmPath = env->GetStringUTFChars(pcmPath_, JNI_FALSE);
+    const char *mp3Path = env->GetStringUTFChars(mp3Path_, JNI_FALSE);
+    const char *tag = env->GetStringUTFChars(tag_, JNI_FALSE);
 
     encoder = new Mp3Encoder();
-    encoder->Init(pcmPath, audioChannels, bitRate, sampleRate, mp3Path);
+    encoder->Init(pcmPath, audioChannels, bitRate, sampleRate, mp3Path, tag);
 
 
     env->ReleaseStringUTFChars(pcmPath_, pcmPath);
     env->ReleaseStringUTFChars(mp3Path_, mp3Path);
+    env->ReleaseStringUTFChars(tag_, tag);
+
 
 }
 

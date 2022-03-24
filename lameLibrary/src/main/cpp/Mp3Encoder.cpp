@@ -10,7 +10,8 @@ Mp3Encoder::Mp3Encoder() = default;
 Mp3Encoder::~Mp3Encoder() = default;
 
 int Mp3Encoder::Init(const char *pcmFilePath, int channels, int bitRate, int sampleRate,
-                     const char *mp3FilePath) {
+                     const char *mp3FilePath, const char *tag) {
+    Mp3Encoder::tag = tag;
     int ret = -1;
     pcmFile = fopen(pcmFilePath, "rb");
     if (pcmFile) {
@@ -21,7 +22,7 @@ int Mp3Encoder::Init(const char *pcmFilePath, int channels, int bitRate, int sam
             lame_set_out_samplerate(lameClient, sampleRate);
             lame_set_num_channels(lameClient, channels);
             lame_set_brate(lameClient, bitRate / 1000);
-            lame_set_quality(lameClient,7);//7的音质最好
+            lame_set_quality(lameClient, 7);//7的音质最好
             lame_init_params(lameClient);
             ret = 0;
         }
@@ -51,14 +52,14 @@ int Mp3Encoder::Encode(bool end_of_stream) {
     size_t readBufferSize;
     long unreadFileSize = getUnreadFileSize(pcmFile);
     if (unreadFileSize < bufferSize) {
-        if(end_of_stream){
-            LOGE("未读文件大小:%ld,不足%ld,但是由于到达了流末尾,因此继续编码,无需return", unreadFileSize, bufferSize)
-        }else{
-            LOGE("未读文件大小:%ld,不足%ld,", unreadFileSize, bufferSize)
+        if (end_of_stream) {
+            LOGE("tag:%s,未读文件大小:%ld,不足%ld,但是由于到达了流末尾,因此继续编码,无需return", tag, unreadFileSize, bufferSize)
+        } else {
+            LOGE("tag:%s,未读文件大小:%ld,不足%ld,", tag, unreadFileSize, bufferSize)
             return -2;
         }
     } else {
-//        LOGI("未读文件大小:%ld,满足%ld", unreadFileSize, bufferSize)
+        LOGI("tag:%s,未读文件大小:%ld,满足%ld", tag, unreadFileSize, bufferSize)
     }
 
 
@@ -93,7 +94,3 @@ void Mp3Encoder::Destroy() {
     delete[] mp3_buffer;
 }
 
-void Mp3Encoder::Encode(int readBufferSize, short *leftBuffer, short *rightBuffer, unsigned char *mp3buf, const int mp3buf_size) {
-    size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, (int) readBufferSize / 2, mp3buf, mp3buf_size);
-    fwrite(mp3buf, 1, wroteSize, mp3File);
-}

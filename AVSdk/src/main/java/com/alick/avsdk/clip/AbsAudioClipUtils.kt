@@ -1,10 +1,11 @@
-package com.alick.avsdk
+package com.alick.avsdk.clip
 
 import android.annotation.SuppressLint
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import androidx.lifecycle.LifecycleCoroutineScope
+import com.alick.avsdk.util.AVUtils
 import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.FileUtils
@@ -29,6 +30,7 @@ abstract class AbsAudioClipUtils(
     private val outFile: File,
     protected val beginMicroseconds: Long,
     protected val endMicroseconds: Long,
+    protected val tag:String,
     protected val onProgress: (progress: Long, max: Long) -> Unit,
     protected val onFinished: () -> Unit
 ) {
@@ -41,12 +43,12 @@ abstract class AbsAudioClipUtils(
     protected val mediaExtractor = MediaExtractor()
     protected lateinit var mediaCodec: MediaCodec
 
-    protected class BufferTask(val byteBuffer: ByteBuffer, val isEndOfStream: Boolean, val presentationTimeUs: Long)
+    class BufferTask(val byteBuffer: ByteBuffer, val isEndOfStream: Boolean, val presentationTimeUs: Long)
 
     private val lameUtils by lazy {
         LameUtils().apply {
             init(
-                outFile.absolutePath.replace(".mp3", ".pcm"), channelCount, bitRate, sampleRate, outFile.absolutePath.replace(".mp3", "_lame.mp3")
+                outFile.absolutePath.replace(".mp3", ".pcm"), channelCount, bitRate, sampleRate, outFile.absolutePath.replace(".mp3", "_lame.mp3"),tag
             )
         }
     }
@@ -198,7 +200,7 @@ abstract class AbsAudioClipUtils(
             //这里克隆一份新的ByteBuffer的原因是:如果不可隆,获取完ByteBuffer立即调用releaseOutputBuffer,会导致有杂音,而用克隆出来的ByteBuffer,再releaseOutputBuffer就不会有影响
             addPcmTask(
                 BufferTask(
-                    clone(it),
+                    AVUtils.clone(it),
                     outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM,
                     outputBufferInfo.presentationTimeUs
                 )
@@ -226,12 +228,5 @@ abstract class AbsAudioClipUtils(
         mediaCodec.release()
     }
 
-    protected fun clone(original: ByteBuffer): ByteBuffer {
-        val clone = ByteBuffer.allocate(original.remaining())
-        original.rewind() //copy from the beginning
-        clone.put(original)
-        original.rewind()
-        clone.flip()
-        return clone
-    }
+
 }
