@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <jni.h>
 #include "lame/lame.h"
+#include "CxwLog.h"
 
 class Mp3Encoder {
 private:
@@ -29,6 +30,8 @@ public:
     int Init(const char *pcmFilePath, int channels, int bitRate, int sampleRate, const char *mp3FilePath,const char* tag);
 
     int Encode(bool end_of_stream);
+
+    void Encode(JNIEnv *env, jobject on_progress);
 
     void Destroy();
 };

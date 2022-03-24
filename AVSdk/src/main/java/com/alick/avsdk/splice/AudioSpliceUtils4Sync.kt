@@ -7,6 +7,8 @@ import android.media.MediaFormat
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.alick.avsdk.clip.AbsAudioClipUtils
 import com.alick.avsdk.util.AVUtils
+import com.alick.avsdk.util.appendAll
+import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.FileUtils
 import kotlinx.coroutines.*
@@ -23,9 +25,9 @@ import java.util.concurrent.BlockingQueue
  * @date 2022/3/24 0:21
  */
 open class AudioSpliceUtils4Sync(
-    protected val lifecycleCoroutineScope: LifecycleCoroutineScope,
-    protected val inFileEachList: MutableList<InFileEach>,
-    protected val outFile: File,
+    private val lifecycleCoroutineScope: LifecycleCoroutineScope,
+    private val inFileEachList: MutableList<InFileEach>,
+    private val outFile: File,
     protected val onProgress: (progress: Long, max: Long) -> Unit,
     protected val onFinished: () -> Unit,
 ) {
@@ -78,7 +80,7 @@ open class AudioSpliceUtils4Sync(
 
     private val writeChannelList by lazy {
         mutableListOf<FileChannel>().apply {
-            inFileEachList.forEachIndexed { index, inFileEach ->
+            inFileEachList.forEachIndexed { index, _ ->
                 val pcmFile = tempOutFileEachList[index]
                 FileUtils.createFile(pcmFile)
                 val writeChannel = FileOutputStream(pcmFile).channel
@@ -87,14 +89,94 @@ open class AudioSpliceUtils4Sync(
         }
     }
 
+    private val lameUtils by lazy {
+        LameUtils().apply {
+            init(
+                tempOutFileEachList.first().absolutePath,
+                paramsList.first().channelCount,
+                paramsList.first().bitRate,
+                paramsList.first().sampleRate,
+                outFile.absolutePath.replace(".mp3", "_Splice.mp3"),
+                "AudioSpliceUtils4Sync"
+            )
+        }
+    }
 
     @SuppressLint("WrongConstant")
     fun splice() {
         lifecycleCoroutineScope.launch {
+            BLog.i("开启多个用于输出pcm文件的协程")
+            val deferredList = mutableListOf<Deferred<Unit>>()
+            inFileEachList.forEachIndexed { fileIndex, _ ->
+                val deferred = async(Dispatchers.IO) {
+                    BLog.i("第${fileIndex + 1}个用于输出pcm的协程已启动")
+                    var cacheBufferSize = 0
+                    val params = paramsList[fileIndex]
+                    params.isEncoding = true
+                    while (params.isEncoding) {
+                        val bufferTask = queueList[fileIndex].take()
+                        val outputByteBuffer = bufferTask.byteBuffer
+                        val wroteSize = writeChannelList[fileIndex].write(outputByteBuffer)
+                        cacheBufferSize += wroteSize
+
+                        /*withContext(Dispatchers.Main) {
+                            val inFileEach = inFileEachList[fileIndex]
+                            onProgress(
+                                bufferTask.presentationTimeUs - inFileEach.beginMicroseconds,
+                                inFileEach.endMicroseconds - inFileEach.beginMicroseconds
+                            )
+                        }*/
+
+                        if (bufferTask.isEndOfStream || cacheBufferSize >= params.bufferSize) {
+                            //只有当达到流末尾时,或新增的文件大小达到一定程度时,才让lame来编码
+                            cacheBufferSize = 0
+                        }
+                        if (bufferTask.isEndOfStream) {
+                            params.isEncoding = false
+                        }
+                    }
+                    BLog.i("pcmToMp3Thread线程结束运行")
+                    finish(writeChannelList[fileIndex], params.mediaExtractor, params.mediaCodec)
+
+                }
+                deferredList.add(deferred)
+            }
+            deferredList.forEachIndexed { index, deferred ->
+                BLog.i("等待第${index + 1}个pcm输出")
+                deferred.await()
+                BLog.i("第${index + 1}个pcm输出完成")
+            }
+            BLog.i(
+                "至此,所有pcm文件均已输出完毕,临时pcm文件地址为:\n${
+                    tempOutFileEachList.joinToString(separator = "\n") {
+                        it.absolutePath
+                    }
+                }"
+            )
+
+            withContext(Dispatchers.IO) {
+                BLog.i("准备将多个pcm文件合成")
+                val firstPcmTempFile: File = tempOutFileEachList.first()
+                firstPcmTempFile.appendAll(files = tempOutFileEachList.subList(1, tempOutFileEachList.size))
+                BLog.i("将多个pcm文件合成完毕,文件地址是:${firstPcmTempFile.absolutePath}")
+                lameUtils.encode(object : LameUtils.Callback{
+                    override fun onProgress(progress: Long, max: Long) {
+                        onProgress.invoke(progress,max)
+                    }
+                })
+                lameUtils.destroy()
+            }
+
+            withContext(Dispatchers.Main){
+                onFinished()
+            }
+        }
+
+        lifecycleCoroutineScope.launch {
+            BLog.i("开启多个用于解码MP3文件的协程")
             val deferredList = mutableListOf<Deferred<Unit>>()
             inFileEachList.forEachIndexed { fileIndex, inFileEach ->
                 //运行pcm转码MP3的协程
-                runPcmToMp3Coroutine(fileIndex)
                 val deferred = async(Dispatchers.IO) {
                     val params = paramsList[fileIndex]
                     val mediaExtractor = params.mediaExtractor
@@ -178,8 +260,6 @@ open class AudioSpliceUtils4Sync(
                                     //释放上一帧的压缩数据
                                     mediaExtractor.advance()
                                 }
-
-
                             }
                         }
 
@@ -198,14 +278,12 @@ open class AudioSpliceUtils4Sync(
                             }
                             params.mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
 
-
                             if (outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
                                 return@async
                             }
                             outputBufferIndex = params.mediaCodec.dequeueOutputBuffer(outputBufferInfo, 0)
                         }
                     }
-
                 }
                 deferredList.add(deferred)
             }
@@ -213,53 +291,10 @@ open class AudioSpliceUtils4Sync(
             deferredList.forEachIndexed { index, deferred ->
                 deferred.await()
             }
-
-            BLog.i("所有MP3文件都截取出了各自的pcm文件")
+            BLog.i("所有MP3文件都已解码完毕")
         }
     }
 
-    /**
-     * 运行协程:pcm转MP3
-     */
-    protected fun runPcmToMp3Coroutine(fileIndex: Int) {
-        lifecycleCoroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                BLog.i("PcmToMp3Thread线程名:" + Thread.currentThread().name)
-                var cacheBufferSize = 0
-                val params = paramsList[fileIndex]
-                params.isEncoding = true
-                while (params.isEncoding) {
-                    val bufferTask = queueList[fileIndex].take()
-                    val outputByteBuffer = bufferTask.byteBuffer
-                    val wroteSize = writeChannelList[fileIndex].write(outputByteBuffer)
-                    cacheBufferSize += wroteSize
-
-                    withContext(Dispatchers.Main) {
-                        val inFileEach = inFileEachList[fileIndex]
-                        onProgress(
-                            bufferTask.presentationTimeUs - inFileEach.beginMicroseconds,
-                            inFileEach.endMicroseconds - inFileEach.beginMicroseconds
-                        )
-                    }
-
-                    if (bufferTask.isEndOfStream || cacheBufferSize >= params.bufferSize) {
-                        //只有当达到流末尾时,或新增的文件大小达到一定程度时,才让lame来编码
-//                        lameUtils.encode(bufferTask.isEndOfStream)//todo 待续
-                        cacheBufferSize = 0
-                    }
-                    if (bufferTask.isEndOfStream) {
-                        params.isEncoding = false
-                    }
-                }
-                BLog.i("pcmToMp3Thread线程结束运行")
-//                lameUtils.destroy()//todo 待续
-                finish(writeChannelList[fileIndex], params.mediaExtractor, params.mediaCodec)
-            }
-            withContext(Dispatchers.Main) {
-                onFinished()
-            }
-        }
-    }
 
     private fun finish(
         writeChannel: FileChannel,

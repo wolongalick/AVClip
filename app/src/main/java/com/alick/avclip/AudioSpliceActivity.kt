@@ -1,5 +1,6 @@
 package com.alick.avclip
 
+import android.app.ProgressDialog
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
@@ -27,6 +28,15 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
 
     }
 
+    private val maxProgress = 100
+
+    private val clipDialog: ProgressDialog by lazy {
+        val progressDialog = ProgressDialog(this)
+        progressDialog.progress = 0
+        progressDialog.max = maxProgress
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog
+    }
 
     override fun getMaterialToolbar(): MaterialToolbar = viewBinding.toolbar
 
@@ -74,9 +84,19 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                         viewBinding.baseAudioInfo2.getEndMicroseconds()
                     ),
                 ), outFile, onProgress = { progress: Long, max: Long ->
-
+                    runOnUiThread {
+                        clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
+                        if (!clipDialog.isShowing) {
+                            clipDialog.show()
+                        }
+                    }
                 }, onFinished = {
-
+                    clipDialog.hide()
+                    //截取完成,输出所耗时长和文件输出路径
+                    val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
+                    viewBinding.tvSpendTimeValue.text = duration
+                    BLog.i("总耗时:${duration}")
+                    viewBinding.tvOutputPathValue.text = outFile.absolutePath
                 }
             ).splice()
         }
