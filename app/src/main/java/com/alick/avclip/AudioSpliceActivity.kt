@@ -35,6 +35,8 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
         progressDialog.progress = 0
         progressDialog.max = maxProgress
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog.setCancelable(false)
+        progressDialog.setCanceledOnTouchOutside(false)
         progressDialog
     }
 
@@ -71,6 +73,9 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
             }
             val beginTime = System.currentTimeMillis()
             val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "拼接-" + TimeUtils.getCurrentTime() + ".mp3")
+            if (!clipDialog.isShowing) {
+                clipDialog.show()
+            }
             AudioSpliceUtils4Sync(
                 lifecycleScope, mutableListOf(
                     AudioSpliceUtils4Sync.InFileEach(
@@ -84,11 +89,9 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                         viewBinding.baseAudioInfo2.getEndMicroseconds()
                     ),
                 ), outFile, onProgress = { progress: Long, max: Long ->
+                    BLog.i("进度:${progress}/${max}")
                     runOnUiThread {
                         clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                        if (!clipDialog.isShowing) {
-                            clipDialog.show()
-                        }
                     }
                 }, onFinished = {
                     clipDialog.hide()

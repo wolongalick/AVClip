@@ -94,7 +94,6 @@ void Mp3Encoder::Encode(JNIEnv *env, jobject on_progress) {
     LOGI("invokeJmethodID:%d", invokeJmethodID != NULL)
 
     while ((readBufferSize = fread(buffer, 2, buffersize / 2, pcmFile)) > 0) {
-        LOGI("读取的readBufferSize:%d,ftell:%ld", readBufferSize, ftell(pcmFile))
         for (int i = 0; i < readBufferSize; ++i) {
             if (i % 2 == 0) {
                 leftBuffer[i / 2] = buffer[i];
