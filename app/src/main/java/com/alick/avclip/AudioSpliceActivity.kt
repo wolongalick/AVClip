@@ -6,12 +6,9 @@ import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioSpliceBinding
-import com.alick.avsdk.clip.AudioClipUtils4Sync
 import com.alick.avsdk.splice.AudioSpliceUtils4Sync
-import com.alick.utilslibrary.BLog
-import com.alick.utilslibrary.StorageUtils
-import com.alick.utilslibrary.T
-import com.alick.utilslibrary.TimeUtils
+import com.alick.ffmpeglibrary.FFmpegUtils
+import com.alick.utilslibrary.*
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
 
@@ -77,7 +74,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                 clipDialog.show()
             }
             AudioSpliceUtils4Sync(
-                lifecycleScope, mutableListOf(
+                lifecycleCoroutineScope = lifecycleScope, inFileEachList = mutableListOf(
                     AudioSpliceUtils4Sync.InFileEach(
                         File(viewBinding.baseAudioInfo1.getSrcFilePath()),
                         viewBinding.baseAudioInfo1.getBeginMicroseconds(),
@@ -88,8 +85,8 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                         viewBinding.baseAudioInfo2.getBeginMicroseconds(),
                         viewBinding.baseAudioInfo2.getEndMicroseconds()
                     ),
-                ), outFile, onProgress = { progress: Long, max: Long ->
-                    BLog.i("进度:${progress}/${max}")
+                ), outFile = outFile, onProgress = { progress: Long, max: Long ->
+//                    BLog.i("总进度:${progress}/${max}")
                     runOnUiThread {
                         clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
                     }
@@ -102,6 +99,16 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                     viewBinding.tvOutputPathValue.text = outFile.absolutePath
                 }
             ).splice()
+        }
+
+        viewBinding.btnCopy.setOnClickListener {
+            val path = viewBinding.tvOutputPathValue.text.toString()
+            if (path.isBlank()) {
+                T.show("路径为空")
+                return@setOnClickListener
+            }
+            EditTextUtils.copy2Clipboard(AppHolder.getApp(), path)
+            T.show("复制成功")
         }
     }
 

@@ -8,6 +8,7 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import com.alick.avsdk.clip.AbsAudioClipUtils
 import com.alick.avsdk.util.AVUtils
 import com.alick.avsdk.util.appendAll
+import com.alick.ffmpeglibrary.FFmpegUtils
 import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.FileUtils
@@ -51,6 +52,17 @@ open class AudioSpliceUtils4Sync(
         val endMicroseconds: Long,
     )
 
+    private val channelCount = 2//暂时写死为双声道
+    private val isSubjectMaxSampleRate = false//当不同采样率的MP3进行拼接时,为了统一输出pcm的采样率,true:代表以最高采样率为准,false:代表以最低采样率为准
+    private var unifiedSampleRate = 0       //统一的采样率
+    private var unifiedSampleRateIndex = 0  //统一的采样率对应的文件索引
+
+    private val outPcmFile by lazy {
+        val outPcmFile = File(outFile.absolutePath.replace(".mp3", ".pcm"))
+        FileUtils.createFile(outPcmFile)
+        outPcmFile
+    }
+
     private val totalDurationMicroseconds = inFileEachList.let { it ->
         var total: Long = 0
         it.forEach { inFileEach ->
@@ -83,6 +95,8 @@ open class AudioSpliceUtils4Sync(
         }
     }
 
+    private val tempResampleOutFileEachList = mutableListOf<File>()
+
     private val queueList by lazy {
         mutableListOf<BlockingQueue<AbsAudioClipUtils.BufferTask>>().apply {
             repeat(inFileEachList.size) {
@@ -107,12 +121,17 @@ open class AudioSpliceUtils4Sync(
 
     private val lameUtils by lazy {
         LameUtils().apply {
+            //统一采样率，比特率和声道
+            val bitRate: Int = paramsList[unifiedSampleRateIndex].bitRate
+            val sampleRate: Int = paramsList[unifiedSampleRateIndex].sampleRate
+            BLog.i("统一后的pcm参数,声道数:${channelCount},比特率:${bitRate},采样率:${sampleRate}")
+
             init(
-                tempOutFileEachList.first().absolutePath,
-                paramsList.first().channelCount,
-                paramsList.first().bitRate,
-                paramsList.first().sampleRate,
-                outFile.absolutePath.replace(".mp3", "_Splice.mp3"),
+                outPcmFile.absolutePath,
+                channelCount,
+                bitRate,
+                sampleRate,
+                outFile.absolutePath,
                 "AudioSpliceUtils4Sync"
             )
         }
@@ -274,8 +293,8 @@ open class AudioSpliceUtils4Sync(
                             params.isEncoding = false
                         }
                     }
-                    BLog.i("pcmToMp3Thread线程结束运行")
-                    finish(writeChannelList[fileIndex], params.mediaExtractor, params.mediaCodec)
+                    BLog.i("第${fileIndex + 1}个用于输出pcm的协程已完成")
+                    finish(fileIndex, params.mediaExtractor, params.mediaCodec)
 
                 }
                 deferredList.add(deferred)
@@ -294,10 +313,43 @@ open class AudioSpliceUtils4Sync(
             )
 
             withContext(Dispatchers.IO) {
+                //找出最高或最低的采样率
+                unifiedSampleRate = paramsList.first().sampleRate
+                unifiedSampleRateIndex = 0
+                paramsList.forEachIndexed { index, params ->
+                    if (isSubjectMaxSampleRate && params.sampleRate > unifiedSampleRate) {
+                        //以高采样率为准
+                        unifiedSampleRate = params.sampleRate
+                        unifiedSampleRateIndex = index
+                    } else if (!isSubjectMaxSampleRate && params.sampleRate < unifiedSampleRate) {
+                        //以低采样率为准
+                        unifiedSampleRate = params.sampleRate
+                        unifiedSampleRateIndex = index
+                    }
+                }
+
+                BLog.i("统一后采样率为:${unifiedSampleRate},对应第${unifiedSampleRateIndex + 1}个文件")
+
+                tempOutFileEachList.forEachIndexed { index, file ->
+                    if (index == unifiedSampleRateIndex) {
+                        tempResampleOutFileEachList.add(file)
+                    } else {
+                        val tempResampleOutFile = File(file.parent, file.name + ".resample")
+                        FFmpegUtils().resample(
+                            file.absolutePath,
+                            tempResampleOutFile.absolutePath,
+                            paramsList[index].sampleRate,
+                            unifiedSampleRate,
+                            channelCount,
+                            channelCount,
+                        )
+                        tempResampleOutFileEachList.add(tempResampleOutFile)
+                    }
+                }
+
                 BLog.i("准备将多个pcm文件合成")
-                val firstPcmTempFile: File = tempOutFileEachList.first()
-                firstPcmTempFile.appendAll(files = tempOutFileEachList.subList(1, tempOutFileEachList.size))
-                BLog.i("将多个pcm文件合成完毕,文件地址是:${firstPcmTempFile.absolutePath}")
+                outPcmFile.appendAll(files = tempResampleOutFileEachList)
+                BLog.i("将多个pcm文件合成完毕,文件地址是:${outPcmFile.absolutePath}")
                 lameUtils.encode(object : LameUtils.Callback {
                     override fun onProgress(progress: Long, max: Long) {
                         progressByPcmToMp3(progress, max)
@@ -330,6 +382,21 @@ open class AudioSpliceUtils4Sync(
         )
     }
 
+    private fun format(f: Int, fs: IntArray): Int {
+        if (f >= fs[0]) {
+            return fs[0]
+        } else if (f <= fs[fs.size - 1]) {
+            return fs[fs.size - 1]
+        } else {
+            for (i in 1 until fs.size) {
+                if (f >= fs[i]) {
+                    return fs[i]
+                }
+            }
+        }
+        return -1
+    }
+
     /**
      * pcm转MP3的进度
      * @param progress  已转换文件的大小
@@ -344,12 +411,12 @@ open class AudioSpliceUtils4Sync(
 
 
     private fun finish(
-        writeChannel: FileChannel,
+        fileIndex: Int,
         mediaExtractor: MediaExtractor,
         mediaCodec: MediaCodec
     ) {
-        BLog.i("关闭、释放资源")
-        writeChannel.close()
+        BLog.i("关闭、释放第${fileIndex + 1}个解码器资源")
+        writeChannelList[fileIndex].close()
         mediaExtractor.release()
         mediaCodec.stop()
         mediaCodec.release()

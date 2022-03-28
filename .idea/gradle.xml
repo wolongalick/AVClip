@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/AVSdk" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/commonLibrary" />
+            <option value="$PROJECT_DIR$/ffmpegLibrary" />
             <option value="$PROJECT_DIR$/lameLibrary" />
             <option value="$PROJECT_DIR$/utilsLibrary" />
           </set>
