@@ -706,8 +706,8 @@ lame_set_msgf(lame_global_flags * gfp, void (*func) (const char *, va_list))
  * Set one of
  *  - brate
  *  - compression ratio.
+ *Default is compression ratio of 11.
  *
- * Default is compression ratio of 11.
  */
 int
 lame_set_brate(lame_global_flags * gfp, int brate)

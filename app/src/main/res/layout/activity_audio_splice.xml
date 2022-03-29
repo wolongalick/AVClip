@@ -41,12 +41,19 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1" />
 
+            <com.alick.avclip.BaseAudioInfo
+                android:id="@+id/baseAudioInfo3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo2" />
+
             <Button
                 android:id="@+id/btnBegin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="开始"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo2"
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo3"
                 app:layout_constraintEnd_toEndOf="parent" />
 
             <TextView
@@ -92,6 +99,14 @@
                 android:text="复制文件路径"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btnBegin" />
+
+            <Button
+                android:id="@+id/btnPlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="播放"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btnCopy" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

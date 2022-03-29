@@ -52,10 +52,9 @@ open class AudioSpliceUtils4Sync(
         val endMicroseconds: Long,
     )
 
-    private val channelCount = 2//暂时写死为双声道
-    private val isSubjectMaxSampleRate = false//当不同采样率的MP3进行拼接时,为了统一输出pcm的采样率,true:代表以最高采样率为准,false:代表以最低采样率为准
-    private var unifiedSampleRate = 0       //统一的采样率
-    private var unifiedSampleRateIndex = 0  //统一的采样率对应的文件索引
+    private val channelCount = 2        //暂时写死为双声道
+    private var maxSampleRate = 0       //统一的采样率
+    private var maxSampleRateIndex = 0  //统一的采样率对应的文件索引
 
     private val outPcmFile by lazy {
         val outPcmFile = File(outFile.absolutePath.replace(".mp3", ".pcm"))
@@ -122,8 +121,8 @@ open class AudioSpliceUtils4Sync(
     private val lameUtils by lazy {
         LameUtils().apply {
             //统一采样率，比特率和声道
-            val bitRate: Int = paramsList[unifiedSampleRateIndex].bitRate
-            val sampleRate: Int = paramsList[unifiedSampleRateIndex].sampleRate
+            val bitRate: Int = paramsList[maxSampleRateIndex].bitRate
+            val sampleRate: Int = paramsList[maxSampleRateIndex].sampleRate
             BLog.i("统一后的pcm参数,声道数:${channelCount},比特率:${bitRate},采样率:${sampleRate}")
 
             init(
@@ -314,24 +313,20 @@ open class AudioSpliceUtils4Sync(
 
             withContext(Dispatchers.IO) {
                 //找出最高或最低的采样率
-                unifiedSampleRate = paramsList.first().sampleRate
-                unifiedSampleRateIndex = 0
+                maxSampleRate = paramsList.first().sampleRate
+                maxSampleRateIndex = 0
                 paramsList.forEachIndexed { index, params ->
-                    if (isSubjectMaxSampleRate && params.sampleRate > unifiedSampleRate) {
+                    if (params.sampleRate > maxSampleRate) {
                         //以高采样率为准
-                        unifiedSampleRate = params.sampleRate
-                        unifiedSampleRateIndex = index
-                    } else if (!isSubjectMaxSampleRate && params.sampleRate < unifiedSampleRate) {
-                        //以低采样率为准
-                        unifiedSampleRate = params.sampleRate
-                        unifiedSampleRateIndex = index
+                        maxSampleRate = params.sampleRate
+                        maxSampleRateIndex = index
                     }
                 }
 
-                BLog.i("统一后采样率为:${unifiedSampleRate},对应第${unifiedSampleRateIndex + 1}个文件")
+                BLog.i("最高采样率为:${maxSampleRate},对应第${maxSampleRateIndex + 1}个文件:${inFileEachList[maxSampleRateIndex].inFile.name}")
 
                 tempOutFileEachList.forEachIndexed { index, file ->
-                    if (index == unifiedSampleRateIndex) {
+                    if (index == maxSampleRateIndex) {
                         tempResampleOutFileEachList.add(file)
                     } else {
                         val tempResampleOutFile = File(file.parent, file.name + ".resample")
@@ -339,7 +334,7 @@ open class AudioSpliceUtils4Sync(
                             file.absolutePath,
                             tempResampleOutFile.absolutePath,
                             paramsList[index].sampleRate,
-                            unifiedSampleRate,
+                            maxSampleRate,
                             channelCount,
                             channelCount,
                         )

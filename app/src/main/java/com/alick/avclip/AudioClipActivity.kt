@@ -6,6 +6,7 @@ import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioClipBinding
+import com.alick.avclip.uitl.IntentUtils
 import com.alick.avsdk.clip.AudioClipUtils4Sync
 import com.alick.utilslibrary.*
 import com.google.android.material.appbar.MaterialToolbar
@@ -78,6 +79,14 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
             }
             EditTextUtils.copy2Clipboard(AppHolder.getApp(), path)
             T.show("复制成功")
+        }
+
+        viewBinding.btnPlay.setOnClickListener {
+            if (viewBinding.tvOutputPathValue.text.toString().isBlank()) {
+                T.show("输出路径不能为空")
+                return@setOnClickListener
+            }
+            startActivity(IntentUtils.getAudioFileIntent(viewBinding.tvOutputPathValue.text.toString()))
         }
     }
 
