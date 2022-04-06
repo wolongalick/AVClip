@@ -14,7 +14,7 @@
         android:theme="@style/Theme.AVClip"
         android:name=".BaseApplication">
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,8 +34,9 @@
         </provider>
 
 
-        <activity android:name=".AudioClipActivity" />
-        <activity android:name=".AudioSpliceActivity" />
+        <activity android:name=".activity.AudioClipActivity" />
+        <activity android:name=".activity.AudioSpliceActivity" />
+        <activity android:name=".activity.AudioMixActivity" />
     </application>
 
 </manifest>

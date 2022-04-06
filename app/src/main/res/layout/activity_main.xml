@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".activity.MainActivity">
 
     <Button
         android:id="@+id/tvAudioClip"
@@ -21,5 +21,12 @@
         android:text="音频拼接"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAudioClip" />
+    <Button
+        android:id="@+id/tvAudioMix"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="音频混音"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAudioSplice" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

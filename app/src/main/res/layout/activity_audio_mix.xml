@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="音频裁剪"
+        app:title="音频混音"
         app:titleCentered="true"
         app:navigationIcon="@mipmap/ic_back_black" />
 
@@ -32,28 +32,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:isEnableChangeVolume="true" />
 
             <com.alick.avclip.widget.BaseAudioInfo
                 android:id="@+id/baseAudioInfo2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1" />
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1"
+                app:isEnableChangeVolume="true" />
 
-            <com.alick.avclip.widget.BaseAudioInfo
-                android:id="@+id/baseAudioInfo3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo2" />
 
             <Button
                 android:id="@+id/btnBegin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="开始"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo3"
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo2"
                 app:layout_constraintEnd_toEndOf="parent" />
 
             <TextView

@@ -7,7 +7,6 @@ import android.media.MediaFormat
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.alick.avsdk.clip.AbsAudioClipUtils
 import com.alick.avsdk.util.AVUtils
-import com.alick.avsdk.util.appendAll
 import com.alick.ffmpeglibrary.FFmpegUtils
 import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.BLog
@@ -29,6 +28,7 @@ open class AudioSpliceUtils4Sync(
     private val lifecycleCoroutineScope: LifecycleCoroutineScope,
     private val inFileEachList: MutableList<InFileEach>,
     private val outFile: File,
+    protected val onGetTempOutPcmFileList: (outPcmFile: File, TempOutFileList: MutableList<File>) -> Unit,
     protected val onProgress: (progress: Long, max: Long) -> Unit,
     protected val onFinished: () -> Unit,
 ) {
@@ -342,9 +342,15 @@ open class AudioSpliceUtils4Sync(
                     }
                 }
 
-                BLog.i("准备将多个pcm文件合成")
-                outPcmFile.appendAll(files = tempResampleOutFileEachList)
-                BLog.i("将多个pcm文件合成完毕,文件地址是:${outPcmFile.absolutePath}")
+                BLog.i(
+                    "重采样后,临时pcm文件地址为:\n${
+                        tempResampleOutFileEachList.joinToString(separator = "\n") {
+                            it.absolutePath
+                        }
+                    }"
+                )
+
+                onGetTempOutPcmFileList(outPcmFile, tempResampleOutFileEachList)
                 lameUtils.encode(object : LameUtils.Callback {
                     override fun onProgress(progress: Long, max: Long) {
                         progressByPcmToMp3(progress, max)

@@ -1,16 +1,15 @@
-package com.alick.avclip
+package com.alick.avclip.widget
 
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.SeekBar
-import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.alick.avclip.constant.SpConstant
+import com.alick.avclip.R
 import com.alick.avclip.databinding.LayoutBaseAudioInfoBinding
 import com.alick.avsdk.MediaParser
 import com.alick.avsdk.bean.AudioBean
-import com.alick.utilslibrary.StorageUtils
 import com.alick.utilslibrary.T
 import com.alick.utilslibrary.TimeFormatUtils
 
@@ -19,9 +18,7 @@ import com.alick.utilslibrary.TimeFormatUtils
  * @description
  * @date 2022/3/22 21:50
  */
-class BaseAudioInfo @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null
-) : ConstraintLayout(context, attrs) {
+class BaseAudioInfo : ConstraintLayout {
 
     private val viewBinding: LayoutBaseAudioInfoBinding = LayoutBaseAudioInfoBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -30,16 +27,26 @@ class BaseAudioInfo @JvmOverloads constructor(
     var onClickImport: (() -> Unit)? = null
     var onParseSuccess: ((filePath: String) -> Unit)? = null
 
+    private var isEnableChangeVolume = false
+
+    constructor(context: Context) : this(context, null)
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        val typeArray = context.obtainStyledAttributes(attrs, R.styleable.BaseAudioInfo)
+        isEnableChangeVolume = typeArray.getBoolean(R.styleable.BaseAudioInfo_isEnableChangeVolume, false)
+        typeArray.recycle()
+    }
+
     override fun onFinishInflate() {
         super.onFinishInflate()
         initListener()
+        initView()
     }
 
     private fun initListener() {
         viewBinding.btnImport.setOnClickListener {
             onClickImport?.invoke()
         }
-
 
         viewBinding.btnParse.setOnClickListener {
             parse(true)
@@ -74,6 +81,32 @@ class BaseAudioInfo @JvmOverloads constructor(
 
             }
         })
+
+        if (isEnableChangeVolume) {
+            viewBinding.sbVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    viewBinding.tvVolume.text = "音量:${progress}"
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+                }
+            })
+        }
+    }
+
+    private fun initView() {
+        if (isEnableChangeVolume) {
+            viewBinding.tvVolume.visibility = View.VISIBLE
+            viewBinding.sbVolume.visibility = View.VISIBLE
+        } else {
+            viewBinding.tvVolume.visibility = View.GONE
+            viewBinding.sbVolume.visibility = View.GONE
+        }
     }
 
     /**
@@ -116,25 +149,46 @@ class BaseAudioInfo @JvmOverloads constructor(
         }
     }
 
+    /**
+     * 检查范围
+     */
     fun checkRange(): Int {
         return viewBinding.sbEnd.progress - viewBinding.sbBegin.progress
     }
 
+    /**
+     * 获取源文件路径
+     */
     fun getSrcFilePath(): String {
         return viewBinding.etSrcFilePath.text.toString().trim()
     }
 
+    /**
+     * 获取开始时间戳,单位:微秒
+     */
     fun getBeginMicroseconds(): Long {
         return (viewBinding.sbBegin.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong()
     }
 
+    /**
+     * 获取结束时间戳,单位:微秒
+     */
     fun getEndMicroseconds(): Long {
         return (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong()
     }
 
+    /**
+     * 设置源文件路径
+     */
     fun setSrcFilePath(srcFilePath: String) {
         viewBinding.etSrcFilePath.setText(srcFilePath)
     }
 
+    /**
+     * 获取音量
+     */
+    fun getVolume(): Int {
+        return viewBinding.sbVolume.progress
+    }
 
 }

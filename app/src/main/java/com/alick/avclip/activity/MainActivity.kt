@@ -1,4 +1,4 @@
-package com.alick.avclip
+package com.alick.avclip.activity
 
 import android.Manifest
 import android.content.Intent
@@ -8,7 +8,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.databinding.ActivityMainBinding
-import com.alick.commonlibrary.BaseActivity
 import com.google.android.material.appbar.MaterialToolbar
 
 
@@ -41,6 +40,9 @@ class MainActivity : BaseAVActivity<ActivityMainBinding>() {
 
         viewBinding.tvAudioSplice.setOnClickListener {
             startActivity(Intent(this@MainActivity, AudioSpliceActivity::class.java))
+        }
+        viewBinding.tvAudioMix.setOnClickListener {
+            startActivity(Intent(this@MainActivity, AudioMixActivity::class.java))
         }
     }
 

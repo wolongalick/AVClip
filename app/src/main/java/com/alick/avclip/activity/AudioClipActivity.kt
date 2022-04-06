@@ -1,4 +1,4 @@
-package com.alick.avclip
+package com.alick.avclip.activity
 
 import android.app.ProgressDialog
 import androidx.lifecycle.lifecycleScope
@@ -15,7 +15,7 @@ import java.io.File
 
 /**
  * @author 崔兴旺
- * @description
+ * @description 音频裁剪
  * @date 2022/3/13 13:46
  */
 class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
