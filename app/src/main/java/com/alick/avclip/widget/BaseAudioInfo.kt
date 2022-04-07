@@ -22,7 +22,6 @@ class BaseAudioInfo : ConstraintLayout {
 
     private val viewBinding: LayoutBaseAudioInfoBinding = LayoutBaseAudioInfoBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private val maxProgress = 100
     private lateinit var audioBean: AudioBean
     var onClickImport: (() -> Unit)? = null
     var onParseSuccess: ((filePath: String) -> Unit)? = null
@@ -140,11 +139,11 @@ class BaseAudioInfo : ConstraintLayout {
      */
     private fun setupSeekBar(durationOfMicroseconds: Long) {
         viewBinding.sbBegin.apply {
-            max = maxProgress
+            max = durationOfMicroseconds.toInt()
             progress = 0
         }
         viewBinding.sbEnd.apply {
-            max = maxProgress
+            max = durationOfMicroseconds.toInt()
             progress = 0
         }
     }
@@ -167,14 +166,14 @@ class BaseAudioInfo : ConstraintLayout {
      * 获取开始时间戳,单位:微秒
      */
     fun getBeginMicroseconds(): Long {
-        return (viewBinding.sbBegin.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong()
+        return viewBinding.sbBegin.progress.toLong()
     }
 
     /**
      * 获取结束时间戳,单位:微秒
      */
     fun getEndMicroseconds(): Long {
-        return (viewBinding.sbEnd.progress.toDouble() / maxProgress * audioBean.durationOfMicroseconds).toLong()
+        return viewBinding.sbEnd.progress.toLong()
     }
 
     /**

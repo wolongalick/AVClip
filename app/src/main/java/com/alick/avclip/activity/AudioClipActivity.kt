@@ -27,6 +27,8 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
         progressDialog.progress = 0
         progressDialog.max = maxProgress
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog.setCancelable(false)
+        progressDialog.setCanceledOnTouchOutside(false)
         progressDialog
     }
 
@@ -49,6 +51,9 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
             val inFile = File(viewBinding.baseAudioInfo1.getSrcFilePath())
             val outFile =
                 File(getExternalFilesDir(AVConstant.OUTPUT_DIR), inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp3")
+            if (!clipDialog.isShowing) {
+                clipDialog.show()
+            }
             AudioClipUtils4Sync(
                 lifecycleScope,
                 inFile,
@@ -57,11 +62,8 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
                 viewBinding.baseAudioInfo1.getEndMicroseconds(),
                 onProgress = { progress: Long, max: Long ->
                     clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                    if (!clipDialog.isShowing) {
-                        clipDialog.show()
-                    }
                 }, onFinished = {
-                    clipDialog.hide()
+                    clipDialog.dismiss()
                     //截取完成,输出所耗时长和文件输出路径
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvSpendTimeValue.text = duration

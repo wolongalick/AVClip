@@ -113,12 +113,12 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                     BLog.i("将多个pcm文件合成完毕,文件地址是:${outPcmFile.absolutePath}")
                 },
                 onProgress = { progress: Long, max: Long ->
-//                    BLog.i("总进度:${progress}/${max}")
+//                    BLog.i("总进度:${progress}/${max},maxProgress:${maxProgress}")
                     runOnUiThread {
                         clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
                     }
                 }, onFinished = {
-                    clipDialog.hide()
+                    clipDialog.dismiss()
                     //截取完成,输出所耗时长和文件输出路径
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvSpendTimeValue.text = duration

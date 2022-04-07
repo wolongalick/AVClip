@@ -108,7 +108,8 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
                         clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
                     }
                 }, onFinished = {
-                    clipDialog.hide()
+                    clipDialog.dismiss()
+
                     //截取完成,输出所耗时长和文件输出路径
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvSpendTimeValue.text = duration

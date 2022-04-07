@@ -383,21 +383,6 @@ open class AudioSpliceUtils4Sync(
         )
     }
 
-    private fun format(f: Int, fs: IntArray): Int {
-        if (f >= fs[0]) {
-            return fs[0]
-        } else if (f <= fs[fs.size - 1]) {
-            return fs[fs.size - 1]
-        } else {
-            for (i in 1 until fs.size) {
-                if (f >= fs[i]) {
-                    return fs[i]
-                }
-            }
-        }
-        return -1
-    }
-
     /**
      * pcm转MP3的进度
      * @param progress  已转换文件的大小
