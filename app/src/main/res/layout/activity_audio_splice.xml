@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="音频裁剪"
+        app:title="音频拼接"
         app:titleCentered="true"
         app:navigationIcon="@mipmap/ic_back_black" />
 

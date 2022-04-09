@@ -38,10 +38,17 @@ class MediaParser {
         } else {
             AudioFormat.ENCODING_PCM_16BIT
         }
-        val maxInputSize = mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)//缓冲区最大尺寸
+
+        //缓冲区最大尺寸
+        val maxInputSize = if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+            mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
+        } else {
+            -1
+        }
+
         val channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
         return AudioBean(
-            sampleRate, bitrate, durationOfMicroseconds,encoding,maxInputSize,channelCount
+            sampleRate, bitrate, durationOfMicroseconds, encoding, maxInputSize, channelCount
         )
 
     }

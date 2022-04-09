@@ -33,8 +33,8 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
     }
 
     override fun initListener() {
-        viewBinding.baseAudioInfo1.onClickImport = {
-            importMP3(0)
+        viewBinding.baseAudioInfo1.onClickImport = { mimeTypes: Array<String> ->
+            importMP3(0, mimeTypes)
         }
 
         viewBinding.baseAudioInfo1.onParseSuccess = {
@@ -67,6 +67,7 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
                     //截取完成,输出所耗时长和文件输出路径
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvSpendTimeValue.text = duration
+                    BLog.i("音频裁剪完毕,文件路径:${outFile.absolutePath}")
                     BLog.i("总耗时:${duration}")
                     viewBinding.tvOutputPathValue.text = outFile.absolutePath
                 }

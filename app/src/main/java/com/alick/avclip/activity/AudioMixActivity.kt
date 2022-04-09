@@ -46,7 +46,7 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
     override fun initListener() {
         viewBinding.baseAudioInfo1.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_1)
+                importMP3(SOURCE_CODE_1,it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX1, it)
@@ -55,7 +55,7 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
 
         viewBinding.baseAudioInfo2.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_2)
+                importMP3(SOURCE_CODE_2,it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX2, it)

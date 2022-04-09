@@ -43,7 +43,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
     override fun initListener() {
         viewBinding.baseAudioInfo1.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_1)
+                importMP3(SOURCE_CODE_1,it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_SPLICE1, it)
@@ -52,7 +52,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
 
         viewBinding.baseAudioInfo2.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_2)
+                importMP3(SOURCE_CODE_2,it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_SPLICE2, it)
@@ -61,7 +61,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
 
         viewBinding.baseAudioInfo3.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_3)
+                importMP3(SOURCE_CODE_3,it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_SPLICE3, it)
@@ -123,6 +123,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.tvSpendTimeValue.text = duration
                     BLog.i("音频拼接完毕,总耗时:${duration}")
+                    BLog.i("音频拼接完毕,文件路径:${outFile.absolutePath}")
                     viewBinding.tvOutputPathValue.text = outFile.absolutePath
                 }
             ).splice()

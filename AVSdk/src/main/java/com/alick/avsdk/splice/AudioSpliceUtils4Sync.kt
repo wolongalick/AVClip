@@ -5,7 +5,7 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import androidx.lifecycle.LifecycleCoroutineScope
-import com.alick.avsdk.clip.AbsAudioClipUtils
+import com.alick.avsdk.clip.BufferTask
 import com.alick.avsdk.util.AVUtils
 import com.alick.ffmpeglibrary.FFmpegUtils
 import com.alick.lamelibrary.LameUtils
@@ -97,9 +97,9 @@ open class AudioSpliceUtils4Sync(
     private val tempResampleOutFileEachList = mutableListOf<File>()
 
     private val queueList by lazy {
-        mutableListOf<BlockingQueue<AbsAudioClipUtils.BufferTask>>().apply {
+        mutableListOf<BlockingQueue<BufferTask>>().apply {
             repeat(inFileEachList.size) {
-                val queue: BlockingQueue<AbsAudioClipUtils.BufferTask> by lazy {
+                val queue: BlockingQueue<BufferTask> by lazy {
                     ArrayBlockingQueue(5000)
                 }
                 add(queue)
@@ -236,7 +236,7 @@ open class AudioSpliceUtils4Sync(
                             decodeOutputBuffer?.let {
                                 //这里克隆一份新的ByteBuffer的原因是:如果不可隆,获取完ByteBuffer立即调用releaseOutputBuffer,会导致有杂音,而用克隆出来的ByteBuffer,再releaseOutputBuffer就不会有影响
                                 queueList[fileIndex].put(
-                                    AbsAudioClipUtils.BufferTask(
+                                    BufferTask(
                                         AVUtils.clone(it),
                                         outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM,
                                         outputBufferInfo.presentationTimeUs
@@ -368,7 +368,7 @@ open class AudioSpliceUtils4Sync(
     /**
      * 写入pcm文件的进度
      */
-    private fun progressByWritePcm(fileIndex: Int, bufferTask: AbsAudioClipUtils.BufferTask) {
+    private fun progressByWritePcm(fileIndex: Int, bufferTask: BufferTask) {
         val inFileEach = inFileEachList[fileIndex]
         progressList[fileIndex] = bufferTask.presentationTimeUs - inFileEach.beginMicroseconds
         onProgress(

@@ -29,8 +29,8 @@ abstract class AbsAudioClipUtils(
     private val inFile: File,
     private val outFile: File,
     protected val beginMicroseconds: Long,
-    protected val endMicroseconds: Long,
-    protected val tag:String,
+    private val endMicroseconds: Long,
+    private val tag:String,
     protected val onProgress: (progress: Long, max: Long) -> Unit,
     protected val onFinished: () -> Unit
 ) {
@@ -43,12 +43,10 @@ abstract class AbsAudioClipUtils(
     protected val mediaExtractor = MediaExtractor()
     protected lateinit var mediaCodec: MediaCodec
 
-    class BufferTask(val byteBuffer: ByteBuffer, val isEndOfStream: Boolean, val presentationTimeUs: Long)
-
     private val lameUtils by lazy {
         LameUtils().apply {
             init(
-                outFile.absolutePath.replace(".mp3", ".pcm"), channelCount, bitRate, sampleRate, outFile.absolutePath.replace(".mp3", "_lame.mp3"),tag
+                outFile.absolutePath.replace(".mp3", ".pcm"), channelCount, bitRate, sampleRate, outFile.absolutePath,tag
             )
         }
     }

@@ -23,16 +23,38 @@ class BaseAudioInfo : ConstraintLayout {
     private val viewBinding: LayoutBaseAudioInfoBinding = LayoutBaseAudioInfoBinding.inflate(LayoutInflater.from(context), this, true)
 
     private lateinit var audioBean: AudioBean
-    var onClickImport: (() -> Unit)? = null
+    var onClickImport: ((mimeTypes: Array<String>) -> Unit)? = null
     var onParseSuccess: ((filePath: String) -> Unit)? = null
 
     private var isEnableChangeVolume = false
+
+    private enum class BAIMimeType(val mimeTypes: Array<String>) {
+        OnlyAudio(arrayOf("audio/*")),
+        OnlyVideo(arrayOf("video/*")),
+        AudioAndVideo(arrayOf("audio/*", "video/*")),
+    }
+
+    private var mimeType = BAIMimeType.OnlyAudio
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         val typeArray = context.obtainStyledAttributes(attrs, R.styleable.BaseAudioInfo)
         isEnableChangeVolume = typeArray.getBoolean(R.styleable.BaseAudioInfo_isEnableChangeVolume, false)
+        mimeType = when (typeArray.getInt(R.styleable.BaseAudioInfo_baiMimeType, 0)) {
+            BAIMimeType.OnlyAudio.ordinal -> {
+                BAIMimeType.OnlyAudio
+            }
+            BAIMimeType.OnlyVideo.ordinal -> {
+                BAIMimeType.OnlyVideo
+            }
+            BAIMimeType.AudioAndVideo.ordinal -> {
+                BAIMimeType.AudioAndVideo
+            }
+            else -> {
+                BAIMimeType.OnlyAudio
+            }
+        }
         typeArray.recycle()
     }
 
@@ -44,7 +66,7 @@ class BaseAudioInfo : ConstraintLayout {
 
     private fun initListener() {
         viewBinding.btnImport.setOnClickListener {
-            onClickImport?.invoke()
+            onClickImport?.invoke(mimeType.mimeTypes)
         }
 
         viewBinding.btnParse.setOnClickListener {
