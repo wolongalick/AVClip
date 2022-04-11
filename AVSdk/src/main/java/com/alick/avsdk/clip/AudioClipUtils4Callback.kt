@@ -41,7 +41,7 @@ class AudioClipUtils4Callback(
     override fun clip() {
         //运行pcm转码MP3的协程
         runPcmToMp3Coroutine()
-        val (buffer, inputBufferInfo) = initMediaCodec(beginMicroseconds)
+        val (byteBuffer, inputBufferInfo) = initMediaCodec(beginMicroseconds)
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             /**
              * 当输入缓冲区可用时调用
@@ -52,7 +52,7 @@ class AudioClipUtils4Callback(
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
                 val inputBuffer: ByteBuffer? = codec.getInputBuffer(index)
                 inputBuffer?.apply {
-                    disposeInputBuffer(inputBufferInfo, buffer, inputBuffer, index)
+                    disposeInputBuffer(byteBuffer, inputBufferInfo, inputBuffer, index)
                 }
             }
 

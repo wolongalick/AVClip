@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.databinding.ActivityMainBinding
+import com.alick.avclip.databinding.BottomOptionsBinding
 import com.google.android.material.appbar.MaterialToolbar
 
 
@@ -66,6 +67,9 @@ class MainActivity : BaseAVActivity<ActivityMainBinding>() {
         viewBinding.tvAudioMix.setOnClickListener {
             startActivity(Intent(this@MainActivity, AudioMixActivity::class.java))
         }
+        viewBinding.tvVideoAddBGM.setOnClickListener {
+            startActivity(Intent(this@MainActivity, VideoAddBGMActivity::class.java))
+        }
     }
 
     override fun initData() {
@@ -88,4 +92,5 @@ class MainActivity : BaseAVActivity<ActivityMainBinding>() {
     }
 
     override fun getMaterialToolbar(): MaterialToolbar? = null
+    override fun getBottomOptionsBinding(): BottomOptionsBinding?=null
 }

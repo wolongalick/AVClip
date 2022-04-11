@@ -40,7 +40,7 @@ abstract class AbsAudioClipUtils(
     private var channelCount: Int = 0
     private var maxBufferSize: Int = 0
     private var isEncoding = false
-    protected val mediaExtractor = MediaExtractor()
+    private val mediaExtractor = MediaExtractor()
     protected lateinit var mediaCodec: MediaCodec
 
     private val lameUtils by lazy {
@@ -76,7 +76,7 @@ abstract class AbsAudioClipUtils(
                 var cacheBufferSize = 0
                 isEncoding = true
                 while (isEncoding) {
-                    val bufferTask = queue.take()
+                    val bufferTask = queue.take()//task方法为阻塞方法,只有当queue.put后,take方法才会获取到返回值
                     val outputByteBuffer = bufferTask.byteBuffer
                     val wroteSize = writeChannel.write(outputByteBuffer)
                     cacheBufferSize += wroteSize
@@ -141,12 +141,13 @@ abstract class AbsAudioClipUtils(
     }
 
     /**
-     * 处理输入缓冲队列
+     * 处理输入缓冲队列:
+     * 通过mediaExtractor的readSampleData和advance()方法,不断地提取数据(buffer),并放入输入缓存区(inputBuffer)中
      */
     @SuppressLint("WrongConstant")
     protected fun disposeInputBuffer(
+        byteBuffer: ByteBuffer,
         inputBufferInfo: MediaCodec.BufferInfo,
-        buffer: ByteBuffer,
         inputBuffer: ByteBuffer,
         index: Int
     ) {
@@ -169,10 +170,10 @@ abstract class AbsAudioClipUtils(
         }
 
         if (isInRange) {
-            inputBufferInfo.size = mediaExtractor.readSampleData(buffer, 0)
+            inputBufferInfo.size = mediaExtractor.readSampleData(byteBuffer, 0)
             inputBufferInfo.presentationTimeUs = sampleTimeUs
             inputBufferInfo.flags = mediaExtractor.sampleFlags
-            inputBuffer.put(buffer)
+            inputBuffer.put(byteBuffer)
             if (isEndOfStream) {
                 mediaCodec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
             } else {
@@ -194,8 +195,9 @@ abstract class AbsAudioClipUtils(
      */
     protected fun disposeOutputBuffer(outputBufferIndex: Int, outputBufferInfo: MediaCodec.BufferInfo) {
         val decodeOutputBuffer: ByteBuffer? = mediaCodec.getOutputBuffer(outputBufferIndex)
+        //decodeOutputBuffer就是解码出的pcm数据
         decodeOutputBuffer?.let {
-            //这里克隆一份新的ByteBuffer的原因是:如果不可隆,获取完ByteBuffer立即调用releaseOutputBuffer,会导致有杂音,而用克隆出来的ByteBuffer,再releaseOutputBuffer就不会有影响
+            //这里克隆一份新的ByteBuffer的原因是:如果不克隆,获取完ByteBuffer立即调用releaseOutputBuffer,会导致有杂音,而用克隆出来的ByteBuffer,再releaseOutputBuffer就不会有影响
             addPcmTask(
                 BufferTask(
                     AVUtils.clone(it),

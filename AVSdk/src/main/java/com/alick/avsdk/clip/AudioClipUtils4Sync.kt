@@ -20,7 +20,7 @@ class AudioClipUtils4Sync(
     outFile: File,
     beginMicroseconds: Long,
     endMicroseconds: Long,
-    tag:String="AudioClipUtils4Sync",
+    tag: String = "AudioClipUtils4Sync",
     onProgress: (progress: Long, max: Long) -> Unit,
     onFinished: () -> Unit
 ) : AbsAudioClipUtils(
@@ -43,7 +43,7 @@ class AudioClipUtils4Sync(
         runPcmToMp3Coroutine()
         lifecycleCoroutineScope.launch {
             withContext(Dispatchers.IO) {
-                val (buffer, inputBufferInfo) = initMediaCodec(beginMicroseconds)
+                val (byteBuffer, inputBufferInfo) = initMediaCodec(beginMicroseconds)
                 //启动解码器
                 mediaCodec.start()
 
@@ -55,10 +55,12 @@ class AudioClipUtils4Sync(
                     if (index >= 0) {
                         val inputBuffer: ByteBuffer? = mediaCodec.getInputBuffer(index)
                         inputBuffer?.apply {
-                            disposeInputBuffer(inputBufferInfo, buffer, inputBuffer, index)
+                            //以下方法内部会通过mediaExtractor,从文件提取数据,并将数据放入inputBuffer中,解码器会自动帮我们解码
+                            disposeInputBuffer(byteBuffer, inputBufferInfo, inputBuffer, index)
                         }
                     }
 
+                    //放完数据后,就可以从输出缓冲队列中取出解码完成的数据了
                     outputBufferIndex = mediaCodec.dequeueOutputBuffer(outputBufferInfo, 0)
                     while (outputBufferIndex >= 0) {
                         disposeOutputBuffer(outputBufferIndex, outputBufferInfo)

@@ -1,12 +1,14 @@
 package com.alick.avclip.base
 
+import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
 import androidx.viewbinding.ViewBinding
+import com.alick.avclip.databinding.BottomOptionsBinding
+import com.alick.avclip.uitl.IntentUtils
 import com.alick.commonlibrary.BaseActivity
 import com.alick.commonlibrary.UriTools
-import com.alick.utilslibrary.BLog
-import com.alick.utilslibrary.T
+import com.alick.utilslibrary.*
 
 /**
  * @author 崔兴旺
@@ -17,6 +19,54 @@ abstract class BaseAVActivity<Binding : ViewBinding> : BaseActivity<Binding>() {
     private val AUDIO_FILE_REQUEST_CODE = 1
 
     private var sourceCode = 0
+
+    companion object {
+        const val SOURCE_CODE_1 = 1
+        const val SOURCE_CODE_2 = 2
+        const val SOURCE_CODE_3 = 3
+    }
+
+    protected val maxProgress = 100
+
+    /**
+     * 获取底部选项Binding
+     */
+    protected abstract fun getBottomOptionsBinding(): BottomOptionsBinding?
+
+    protected val clipDialog: ProgressDialog by lazy {
+        val progressDialog = ProgressDialog(this)
+        progressDialog.progress = 0
+        progressDialog.max = maxProgress
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog.setCancelable(false)
+        progressDialog.setCanceledOnTouchOutside(false)
+        progressDialog
+    }
+
+    final override fun initListenerAfter() {
+        super.initListenerAfter()
+        val bottomOptionsBinding: BottomOptionsBinding? = getBottomOptionsBinding()
+        bottomOptionsBinding?.let { binding ->
+            binding.btnCopy.setOnClickListener {
+                val path = binding.tvOutputPathValue.text.toString()
+                if (path.isBlank()) {
+                    T.show("路径为空")
+                    return@setOnClickListener
+                }
+                EditTextUtils.copy2Clipboard(AppHolder.getApp(), path)
+                T.show("复制成功")
+            }
+
+            binding.btnPlay.setOnClickListener {
+                if (binding.tvOutputPathValue.text.toString().isBlank()) {
+                    T.show("输出路径不能为空")
+                    return@setOnClickListener
+                }
+                startActivity(IntentUtils.getAudioFileIntent(binding.tvOutputPathValue.text.toString()))
+            }
+        }
+
+    }
 
     /**
      * 导入文件

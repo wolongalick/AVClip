@@ -1,11 +1,11 @@
 package com.alick.avclip.activity
 
-import android.app.ProgressDialog
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioClipBinding
+import com.alick.avclip.databinding.BottomOptionsBinding
 import com.alick.avclip.uitl.IntentUtils
 import com.alick.avsdk.clip.AudioClipUtils4Sync
 import com.alick.utilslibrary.*
@@ -19,17 +19,8 @@ import java.io.File
  * @date 2022/3/13 13:46
  */
 class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
-
-    private val maxProgress = 100
-
-    private val clipDialog: ProgressDialog by lazy {
-        val progressDialog = ProgressDialog(this)
-        progressDialog.progress = 0
-        progressDialog.max = maxProgress
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-        progressDialog.setCancelable(false)
-        progressDialog.setCanceledOnTouchOutside(false)
-        progressDialog
+    override fun getMaterialToolbar(): MaterialToolbar {
+        return viewBinding.toolbar
     }
 
     override fun initListener() {
@@ -41,7 +32,7 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
             StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_CLIP, it)
         }
 
-        viewBinding.btnBegin.setOnClickListener {
+        viewBinding.bottomOptions.btnBegin.setOnClickListener {
             if (viewBinding.baseAudioInfo1.checkRange() <= 0) {
                 T.show("截取的起始时间应该小于结束时间")
                 return@setOnClickListener
@@ -66,30 +57,12 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
                     clipDialog.dismiss()
                     //截取完成,输出所耗时长和文件输出路径
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.tvSpendTimeValue.text = duration
+                    viewBinding.bottomOptions.tvSpendTimeValue.text = duration
                     BLog.i("音频裁剪完毕,文件路径:${outFile.absolutePath}")
                     BLog.i("总耗时:${duration}")
-                    viewBinding.tvOutputPathValue.text = outFile.absolutePath
+                    viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
                 }
             ).clip()
-        }
-
-        viewBinding.btnCopy.setOnClickListener {
-            val path = viewBinding.tvOutputPathValue.text.toString()
-            if (path.isBlank()) {
-                T.show("路径为空")
-                return@setOnClickListener
-            }
-            EditTextUtils.copy2Clipboard(AppHolder.getApp(), path)
-            T.show("复制成功")
-        }
-
-        viewBinding.btnPlay.setOnClickListener {
-            if (viewBinding.tvOutputPathValue.text.toString().isBlank()) {
-                T.show("输出路径不能为空")
-                return@setOnClickListener
-            }
-            startActivity(IntentUtils.getAudioFileIntent(viewBinding.tvOutputPathValue.text.toString()))
         }
     }
 
@@ -110,8 +83,12 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
         clipDialog.dismiss()
     }
 
-    override fun getMaterialToolbar(): MaterialToolbar {
-        return viewBinding.toolbar
+    /**
+     * 获取底部选项Binding
+     */
+    override fun getBottomOptionsBinding(): BottomOptionsBinding {
+        return viewBinding.bottomOptions
     }
+
 }
 

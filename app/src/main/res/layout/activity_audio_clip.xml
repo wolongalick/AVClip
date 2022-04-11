@@ -33,67 +33,17 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:baiMimeType="audioAndVideo" />
+                app:bai_mimeType="audioAndVideo" />
 
-            <Button
-                android:id="@+id/btnBegin"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="开始"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <TextView
-                android:id="@+id/tvSpendTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="耗时:"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@id/tvSpendTimeValue"
-                app:layout_constraintBottom_toBottomOf="@id/tvSpendTimeValue" />
-
-            <TextView
-                android:id="@+id/tvSpendTimeValue"
-                style="@style/WW.Text16Black"
-                tools:text="10秒"
-                app:layout_constraintStart_toEndOf="@id/tvSpendTime"
-                app:layout_constraintTop_toBottomOf="@id/btnBegin" />
-
-
-            <TextView
-                android:id="@+id/tvOutputPath"
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvSpendTimeValue"
-                android:text="输出路径:" />
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1">
 
-            <TextView
-                android:id="@+id/tvOutputPathValue"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvOutputPath"
-                app:layout_constraintEnd_toStartOf="@id/btnCopy"
-                android:textColor="@color/color_text_main"
-                android:textSize="16sp"
-                android:text="" />
+                <include android:id="@+id/bottomOptions" layout="@layout/bottom_options" />
 
-            <Button
-                android:id="@+id/btnCopy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="复制文件路径"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/btnBegin" />
-
-            <Button
-                android:id="@+id/btnPlay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="播放"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/btnCopy" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

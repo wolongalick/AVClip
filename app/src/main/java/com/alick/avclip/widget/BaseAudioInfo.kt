@@ -28,10 +28,10 @@ class BaseAudioInfo : ConstraintLayout {
 
     private var isEnableChangeVolume = false
 
-    private enum class BAIMimeType(val mimeTypes: Array<String>) {
-        OnlyAudio(arrayOf("audio/*")),
-        OnlyVideo(arrayOf("video/*")),
-        AudioAndVideo(arrayOf("audio/*", "video/*")),
+    private enum class BAIMimeType(val mimeTypes: Array<String>, val hint: String) {
+        OnlyAudio(arrayOf("audio/*"), "音频"),
+        OnlyVideo(arrayOf("video/*"), "视频"),
+        AudioAndVideo(arrayOf("audio/*", "video/*"), "音频或视频"),
     }
 
     private var mimeType = BAIMimeType.OnlyAudio
@@ -40,8 +40,8 @@ class BaseAudioInfo : ConstraintLayout {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         val typeArray = context.obtainStyledAttributes(attrs, R.styleable.BaseAudioInfo)
-        isEnableChangeVolume = typeArray.getBoolean(R.styleable.BaseAudioInfo_isEnableChangeVolume, false)
-        mimeType = when (typeArray.getInt(R.styleable.BaseAudioInfo_baiMimeType, 0)) {
+        isEnableChangeVolume = typeArray.getBoolean(R.styleable.BaseAudioInfo_bai_isEnableChangeVolume, false)
+        mimeType = when (typeArray.getInt(R.styleable.BaseAudioInfo_bai_mimeType, 0)) {
             BAIMimeType.OnlyAudio.ordinal -> {
                 BAIMimeType.OnlyAudio
             }
@@ -56,6 +56,11 @@ class BaseAudioInfo : ConstraintLayout {
             }
         }
         typeArray.recycle()
+
+        if (isInEditMode) {
+            initListener()
+            initView()
+        }
     }
 
     override fun onFinishInflate() {
@@ -121,6 +126,8 @@ class BaseAudioInfo : ConstraintLayout {
     }
 
     private fun initView() {
+        viewBinding.etSrcFilePath.hint = "请输入${mimeType.hint}文件路径"
+
         if (isEnableChangeVolume) {
             viewBinding.tvVolume.visibility = View.VISIBLE
             viewBinding.sbVolume.visibility = View.VISIBLE
@@ -149,7 +156,7 @@ class BaseAudioInfo : ConstraintLayout {
             .append("时长:${TimeFormatUtils.format((audioBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
             .append("pcm编码:${audioBean.pcmEncoding}\n")
             .append("缓冲区最大尺寸:${audioBean.maxInputSize}\n")
-            .append("音频声道数:${audioBean.channelCount}")
+            .append("声道数:${audioBean.channelCount}")
 
         viewBinding.etInfo.setText(sb.toString())
         setupSeekBar(audioBean.durationOfMicroseconds)

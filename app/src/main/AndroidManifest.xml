@@ -39,6 +39,7 @@
         <activity android:name=".activity.AudioClipActivity" />
         <activity android:name=".activity.AudioSpliceActivity" />
         <activity android:name=".activity.AudioMixActivity" />
+        <activity android:name=".activity.VideoAddBGMActivity" />
     </application>
 
 </manifest>

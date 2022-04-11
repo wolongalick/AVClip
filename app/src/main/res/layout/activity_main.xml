@@ -28,5 +28,12 @@
         android:text="音频混音"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAudioSplice" />
+    <Button
+        android:id="@+id/tvVideoAddBGM"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="为视频添加背景音乐"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAudioMix" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,11 +1,10 @@
 package com.alick.avclip.activity
 
-import android.app.ProgressDialog
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
-import com.alick.avclip.databinding.ActivityAudioMixBinding
+import com.alick.avclip.databinding.ActivityVideoAddBgmBinding
 import com.alick.avclip.databinding.BottomOptionsBinding
 import com.alick.avclip.uitl.IntentUtils
 import com.alick.avsdk.splice.AudioSpliceUtils4Sync
@@ -14,33 +13,35 @@ import com.alick.utilslibrary.*
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
 
-
 /**
- * @author 崔兴旺
- * @description 音频混音
- * @date 2022/4/1 21:59
+ * @createTime 2022/4/8 9:47
+ * @author 崔兴旺  1607009565@qq.com
+ * @description 为视频添加背景音乐
  */
-class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
+class VideoAddBGMActivity : BaseAVActivity<ActivityVideoAddBgmBinding>() {
     override fun getMaterialToolbar(): MaterialToolbar {
         return viewBinding.toolbar
     }
 
+    /**
+     * 初始化监听事件
+     */
     override fun initListener() {
         viewBinding.baseAudioInfo1.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_1,it)
+                importMP3(SOURCE_CODE_1, it)
             }
             onParseSuccess = {
-                StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX1, it)
+                StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_VIDEO_ADD_BGM1, it)
             }
         }
 
         viewBinding.baseAudioInfo2.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_2,it)
+                importMP3(SOURCE_CODE_2, it)
             }
             onParseSuccess = {
-                StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX2, it)
+                StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_VIDEO_ADD_BGM2, it)
             }
         }
 
@@ -100,18 +101,19 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
                 }
             ).splice()
         }
-
-
     }
 
+    /**
+     * 初始化数据
+     */
     override fun initData() {
         viewBinding.baseAudioInfo1.apply {
-            setSrcFilePath(StorageUtils.getString(SpConstant.AUDIO_FILE_PATH_OF_MIX1))
+            setSrcFilePath(StorageUtils.getString(SpConstant.AUDIO_FILE_PATH_OF_VIDEO_ADD_BGM1))
             parse()
         }
 
         viewBinding.baseAudioInfo2.apply {
-            setSrcFilePath(StorageUtils.getString(SpConstant.AUDIO_FILE_PATH_OF_MIX2))
+            setSrcFilePath(StorageUtils.getString(SpConstant.AUDIO_FILE_PATH_OF_VIDEO_ADD_BGM2))
             parse()
         }
     }
@@ -140,5 +142,4 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
     override fun getBottomOptionsBinding(): BottomOptionsBinding {
         return viewBinding.bottomOptions
     }
-
 }
