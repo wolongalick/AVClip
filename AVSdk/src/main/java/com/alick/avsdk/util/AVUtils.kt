@@ -1,5 +1,6 @@
 package com.alick.avsdk.util
 
+import android.media.MediaFormat
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
@@ -40,6 +41,18 @@ class AVUtils {
             }
         }
 
+        /**
+         * 从MediaFormat中获取最大缓冲区尺寸
+         */
+        fun getMaxInputSize(mediaFormat:MediaFormat):Int{
+            return if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+                //使用从实际媒体格式中取出的实际值
+                mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
+            } else {
+                //使用默认值
+                100 * 1000
+            }
+        }
 
 
     }

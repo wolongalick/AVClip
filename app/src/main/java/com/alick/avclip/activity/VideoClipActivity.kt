@@ -4,32 +4,44 @@ import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avclip.constant.AVConstant
 import com.alick.avclip.constant.SpConstant
-import com.alick.avclip.databinding.ActivityAudioClipBinding
+import com.alick.avclip.databinding.ActivityVideoClipBinding
 import com.alick.avclip.databinding.BottomOptionsBinding
-import com.alick.avclip.uitl.IntentUtils
 import com.alick.avsdk.clip.AudioClipUtils4Sync
-import com.alick.utilslibrary.*
+import com.alick.avsdk.clip.video.VideoClipUtils
+import com.alick.utilslibrary.BLog
+import com.alick.utilslibrary.StorageUtils
+import com.alick.utilslibrary.T
+import com.alick.utilslibrary.TimeUtils
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
 
-
 /**
- * @author 崔兴旺
- * @description 音频裁剪
- * @date 2022/3/13 13:46
+ * @createTime 2022/4/13 8:52
+ * @author 崔兴旺  1607009565@qq.com
+ * @description 视频裁剪
  */
-class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
+class VideoClipActivity : BaseAVActivity<ActivityVideoClipBinding>() {
+    /**
+     * 获取底部选项Binding
+     */
+    override fun getBottomOptionsBinding(): BottomOptionsBinding {
+        return viewBinding.bottomOptions
+    }
+
     override fun getMaterialToolbar(): MaterialToolbar {
         return viewBinding.toolbar
     }
 
+    /**
+     * 初始化监听事件
+     */
     override fun initListener() {
         viewBinding.baseAudioInfo1.onClickImport = { mimeTypes: Array<String> ->
             importMP3(0, mimeTypes)
         }
 
         viewBinding.baseAudioInfo1.onParseSuccess = {
-            StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_CLIP, it)
+            StorageUtils.setString(SpConstant.VIDEO_FILE_PATH_OF_CLIP, it)
         }
 
         viewBinding.bottomOptions.btnBegin.setOnClickListener {
@@ -41,11 +53,12 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
             val beginTime = System.currentTimeMillis()
             val inFile = File(viewBinding.baseAudioInfo1.getSrcFilePath())
             val outFile =
-                File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "音频裁剪-" + inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp3")
+                File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "视频裁剪-"+inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp4")
             if (!clipDialog.isShowing) {
                 clipDialog.show()
             }
-            AudioClipUtils4Sync(
+
+            VideoClipUtils(
                 lifecycleScope,
                 inFile,
                 outFile,
@@ -58,7 +71,7 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
                     //截取完成,输出所耗时长和文件输出路径
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
                     viewBinding.bottomOptions.tvSpendTimeValue.text = duration
-                    BLog.i("音频裁剪完毕,文件路径:${outFile.absolutePath}")
+                    BLog.i("视频裁剪完毕,文件路径:${outFile.absolutePath}")
                     BLog.i("总耗时:${duration}")
                     viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
                 }
@@ -66,8 +79,11 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
         }
     }
 
+    /**
+     * 初始化数据
+     */
     override fun initData() {
-        val audioFilePath: String = StorageUtils.getString(SpConstant.AUDIO_FILE_PATH_OF_CLIP)
+        val audioFilePath: String = StorageUtils.getString(SpConstant.VIDEO_FILE_PATH_OF_CLIP)
         viewBinding.baseAudioInfo1.setSrcFilePath(audioFilePath)
         viewBinding.baseAudioInfo1.parse()
     }
@@ -77,13 +93,4 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
         viewBinding.baseAudioInfo1.setSrcFilePath(filePath)
         viewBinding.baseAudioInfo1.parse(true)
     }
-
-    /**
-     * 获取底部选项Binding
-     */
-    override fun getBottomOptionsBinding(): BottomOptionsBinding {
-        return viewBinding.bottomOptions
-    }
-
 }
-

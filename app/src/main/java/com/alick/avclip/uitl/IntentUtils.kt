@@ -21,7 +21,19 @@ class IntentUtils {
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or FLAG_GRANT_WRITE_URI_PERMISSION) //允许临时的读和写
 
             val uri = UriUtils.getUriCompatibleN(AppHolder.getApp(), filePath)
-            intent.setDataAndType(uri, "audio/*")
+            intent.setDataAndType(
+                uri, when {
+                    filePath.endsWith(".mp3",true) -> {
+                        "audio/*"
+                    }
+                    filePath.endsWith(".mp4",true) -> {
+                        "video/*"
+                    }
+                    else -> {
+                        "*/*"
+                    }
+                }
+            )
             return intent
         }
     }

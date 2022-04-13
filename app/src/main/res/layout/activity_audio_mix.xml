@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.alick.avclip.widget.BaseAudioInfo
+            <com.alick.avclip.widget.BaseAVInfo
                 android:id="@+id/baseAudioInfo1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -35,7 +35,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:bai_isEnableChangeVolume="true" />
 
-            <com.alick.avclip.widget.BaseAudioInfo
+            <com.alick.avclip.widget.BaseAVInfo
                 android:id="@+id/baseAudioInfo2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

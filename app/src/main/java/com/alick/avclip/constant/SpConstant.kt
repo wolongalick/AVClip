@@ -2,7 +2,7 @@ package com.alick.avclip.constant
 
 class SpConstant {
     companion object {
-        /*裁剪常量*/
+        /*音频裁剪常量*/
         const val AUDIO_FILE_PATH_OF_CLIP: String = "audio_file_path_of_clip"
 
         /*拼接常量*/
@@ -19,5 +19,9 @@ class SpConstant {
         const val AUDIO_FILE_PATH_OF_VIDEO_ADD_BGM1: String = "audio_file_path_of_video_add_bgm1"
         const val AUDIO_FILE_PATH_OF_VIDEO_ADD_BGM2: String = "audio_file_path_of_video_add_bgm2"
         const val AUDIO_FILE_PATH_OF_VIDEO_ADD_BGM3: String = "audio_file_path_of_video_add_bgm3"
+
+
+        /*视频裁剪常量*/
+        const val VIDEO_FILE_PATH_OF_CLIP: String = "video_file_path_of_clip"
     }
 }

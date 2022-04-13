@@ -162,6 +162,7 @@ abstract class AbsAudioClipUtils(
             }
             sampleTimeUs == -1L || sampleTimeUs >= endMicroseconds -> {
                 isEndOfStream = true
+                isInRange = false
             }
             else -> {
                 //正常执行
@@ -170,9 +171,11 @@ abstract class AbsAudioClipUtils(
         }
 
         if (isInRange) {
+            //通过mediaExtractor将音频数据读取出来,读取到buffer中
             inputBufferInfo.size = mediaExtractor.readSampleData(byteBuffer, 0)
             inputBufferInfo.presentationTimeUs = sampleTimeUs
             inputBufferInfo.flags = mediaExtractor.sampleFlags
+            //将读取到的buffer,放入MediaCodec的输入队列inputBuffer中,随后MediaCodec会自动帮我们解码
             inputBuffer.put(byteBuffer)
             if (isEndOfStream) {
                 mediaCodec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)

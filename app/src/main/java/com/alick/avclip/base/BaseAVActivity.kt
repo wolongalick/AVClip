@@ -16,7 +16,7 @@ import com.alick.utilslibrary.*
  * @date 2022/3/22 22:43
  */
 abstract class BaseAVActivity<Binding : ViewBinding> : BaseActivity<Binding>() {
-    private val AUDIO_FILE_REQUEST_CODE = 1
+    private val AV_FILE_REQUEST_CODE = 1
 
     private var sourceCode = 0
 
@@ -78,13 +78,13 @@ abstract class BaseAVActivity<Binding : ViewBinding> : BaseActivity<Binding>() {
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
         intent.type = "*/*"
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        startActivityForResult(intent, AUDIO_FILE_REQUEST_CODE)
+        startActivityForResult(intent, AV_FILE_REQUEST_CODE)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
-            AUDIO_FILE_REQUEST_CODE -> {
+            AV_FILE_REQUEST_CODE -> {
                 val uri: Uri? = data?.data
                 if (uri == null) {
                     T.show("选择的文件路径为空")
@@ -106,5 +106,8 @@ abstract class BaseAVActivity<Binding : ViewBinding> : BaseActivity<Binding>() {
 
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        clipDialog.dismiss()
+    }
 }

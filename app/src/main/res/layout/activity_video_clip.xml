@@ -2,8 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
@@ -11,7 +10,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="音频拼接"
+        app:title="视频裁剪"
         app:titleCentered="true"
         app:navigationIcon="@mipmap/ic_back_black" />
 
@@ -32,27 +31,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <com.alick.avclip.widget.BaseAVInfo
-                android:id="@+id/baseAudioInfo2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1" />
-
-            <com.alick.avclip.widget.BaseAVInfo
-                android:id="@+id/baseAudioInfo3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo2" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:bai_mimeType="onlyVideo" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo3">
+                app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1">
 
                 <include android:id="@+id/bottomOptions" layout="@layout/bottom_options" />
 

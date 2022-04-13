@@ -17,10 +17,6 @@ import com.google.android.material.appbar.MaterialToolbar
 
 class MainActivity : BaseAVActivity<ActivityMainBinding>() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onResume() {
         super.onResume()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -67,6 +63,9 @@ class MainActivity : BaseAVActivity<ActivityMainBinding>() {
         viewBinding.tvAudioMix.setOnClickListener {
             startActivity(Intent(this@MainActivity, AudioMixActivity::class.java))
         }
+        viewBinding.tvVideoClip.setOnClickListener {
+            startActivity(Intent(this@MainActivity, VideoClipActivity::class.java))
+        }
         viewBinding.tvVideoAddBGM.setOnClickListener {
             startActivity(Intent(this@MainActivity, VideoAddBGMActivity::class.java))
         }
@@ -92,5 +91,5 @@ class MainActivity : BaseAVActivity<ActivityMainBinding>() {
     }
 
     override fun getMaterialToolbar(): MaterialToolbar? = null
-    override fun getBottomOptionsBinding(): BottomOptionsBinding?=null
+    override fun getBottomOptionsBinding(): BottomOptionsBinding? = null
 }

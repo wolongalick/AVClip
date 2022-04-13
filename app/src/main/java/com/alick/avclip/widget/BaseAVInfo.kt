@@ -10,6 +10,7 @@ import com.alick.avclip.R
 import com.alick.avclip.databinding.LayoutBaseAudioInfoBinding
 import com.alick.avsdk.MediaParser
 import com.alick.avsdk.bean.AudioBean
+import com.alick.avsdk.bean.MediaBean
 import com.alick.utilslibrary.T
 import com.alick.utilslibrary.TimeFormatUtils
 
@@ -18,11 +19,11 @@ import com.alick.utilslibrary.TimeFormatUtils
  * @description
  * @date 2022/3/22 21:50
  */
-class BaseAudioInfo : ConstraintLayout {
+class BaseAVInfo : ConstraintLayout {
 
     private val viewBinding: LayoutBaseAudioInfoBinding = LayoutBaseAudioInfoBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private lateinit var audioBean: AudioBean
+    private lateinit var mediaBean: MediaBean
     var onClickImport: ((mimeTypes: Array<String>) -> Unit)? = null
     var onParseSuccess: ((filePath: String) -> Unit)? = null
 
@@ -80,7 +81,7 @@ class BaseAudioInfo : ConstraintLayout {
 
         viewBinding.sbBegin.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * audioBean.durationOfMicroseconds / 1000_000L).toInt()
+                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * mediaBean.durationOfMicroseconds / 1000_000L).toInt()
                 viewBinding.tvBeginTimeValue.text = TimeFormatUtils.format(durationOfSeconds)
             }
 
@@ -95,7 +96,7 @@ class BaseAudioInfo : ConstraintLayout {
 
         viewBinding.sbEnd.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * audioBean.durationOfMicroseconds / 1000_000L).toInt()
+                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * mediaBean.durationOfMicroseconds / 1000_000L).toInt()
                 viewBinding.tvBeginEndValue.text = TimeFormatUtils.format(durationOfSeconds)
             }
 
@@ -149,18 +150,48 @@ class BaseAudioInfo : ConstraintLayout {
             return
         }
 
-        audioBean = MediaParser().parseAudio(filePath)
-        val sb = StringBuilder()
-        sb.append("音频采样率:${audioBean.sampleRate}\n")
-            .append("比特率:${audioBean.bitrate}\n")
-            .append("时长:${TimeFormatUtils.format((audioBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
-            .append("pcm编码:${audioBean.pcmEncoding}\n")
-            .append("缓冲区最大尺寸:${audioBean.maxInputSize}\n")
-            .append("声道数:${audioBean.channelCount}")
+        val info: String = if (filePath.endsWith(".mp3", true)) {
+            parseAudio(filePath)
+        } else if (filePath.endsWith(".mp4", true)) {
+            parseVideo(filePath)
+        } else {
+            ""
+        }
+        if (info.isNotEmpty()) {
+            viewBinding.etInfo.setText(info)
+            setupSeekBar(mediaBean.durationOfMicroseconds)
+            onParseSuccess?.invoke(filePath)
+        } else {
+            T.show("文件解析失败")
+        }
+    }
 
-        viewBinding.etInfo.setText(sb.toString())
-        setupSeekBar(audioBean.durationOfMicroseconds)
-        onParseSuccess?.invoke(filePath)
+    private fun parseAudio(filePath: String): String {
+        val sb = StringBuilder()
+        MediaParser().parseAudio(filePath).let {
+            mediaBean = it
+            sb.append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
+                .append("缓冲区最大尺寸:${it.maxInputSize}\n")
+                .append("音频采样率:${it.sampleRate}\n")
+                .append("比特率:${it.bitrate}\n")
+                .append("pcm编码:${it.pcmEncoding}\n")
+                .append("声道数:${it.channelCount}\n")
+        }
+        return sb.removeSuffix("\n").toString()
+    }
+
+
+    private fun parseVideo(filePath: String): String {
+        val sb = StringBuilder()
+        MediaParser().parseVideo(filePath).let {
+            mediaBean = it
+            sb.append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
+                .append("缓冲区最大尺寸:${it.maxInputSize}\n")
+                .append("宽:${it.width}\n")
+                .append("高:${it.height}\n")
+                .append("帧率:${it.frameRate}\n")
+        }
+        return sb.removeSuffix("\n").toString()
     }
 
     /**
