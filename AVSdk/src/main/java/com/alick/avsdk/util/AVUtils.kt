@@ -94,7 +94,7 @@ class AVUtils {
             val mediaExtractor = MediaExtractor()
             mediaExtractor.setDataSource(inAudioOrVideoFile.absolutePath)
 
-            BLog.i("正在提取pcm,准备寻找轨道音频/视频轨道索引")
+            BLog.i("正在提取pcm,准备寻找音频/视频轨道索引")
             val (audioTrackIndex, _) = findTrackIndex(mediaExtractor)
 
             if (audioTrackIndex == -1) {

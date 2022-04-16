@@ -43,6 +43,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/baseAudioInfo1"
                 app:bai_isEnableChangeVolume="true"
+                app:bai_isEnableChangeBeginLocation="true"
                 app:bai_mimeType="audioAndVideo"/>
 
 

@@ -87,9 +87,9 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                         viewBinding.baseAudioInfo3.getEndMicroseconds()
                     ),
                 ), outFile = outFile,
-                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<File>, sampleRate: Int, channelCount: Int ->
+                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<AudioSpliceUtils4Sync.ResampleAudioBean>, sampleRate: Int, channelCount: Int ->
                     BLog.i("准备将多个pcm文件合成")
-                    AVUtils.appendAll(outPcmFile, files = tempOutFileList)
+                    AVUtils.appendAll(outPcmFile, files = tempOutFileList.map { it.file }.toMutableList())
                     BLog.i("将多个pcm文件合成完毕,文件地址是:${outPcmFile.absolutePath}")
                 },
                 onProgress = { progress: Long, max: Long ->

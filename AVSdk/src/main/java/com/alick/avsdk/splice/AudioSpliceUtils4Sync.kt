@@ -11,6 +11,7 @@ import com.alick.ffmpeglibrary.FFmpegUtils
 import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.FileUtils
+import com.alick.utilslibrary.TimeFormatUtils
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
@@ -28,11 +29,24 @@ open class AudioSpliceUtils4Sync(
     private val lifecycleCoroutineScope: LifecycleCoroutineScope,
     private val inFileEachList: MutableList<InFileEach>,
     private val outFile: File,
-    protected val onGetTempOutPcmFileList: (outPcmFile: File, tempOutFileList: MutableList<File>, sampleRate: Int, channelCount: Int) -> Unit,
+    protected val onGetTempOutPcmFileList: (outPcmFile: File, tempOutFileList: MutableList<ResampleAudioBean>, sampleRate: Int, channelCount: Int) -> Unit,
     protected val onProgress: (progress: Long, max: Long) -> Unit,
     protected val onFinished: () -> Unit,
     private val isNeedPcm2Mp3: Boolean = true,
 ) {
+
+    //第二个音频播放的起始位置,单位:微秒
+    val secondFileBeginLocation: Long = if (inFileEachList.size > 1) {
+        inFileEachList[1].offsetMicroseconds
+    } else {
+        0
+    }
+
+    /**
+     * 第一个音频文件,时间戳与文件字节的映射关系
+     */
+    var firstFileTimeLocation: MutableMap<Long, Long>? = null
+
     class Params {
         val bufferSize = 1024 * 256
         var sampleRate: Int = 0
@@ -51,7 +65,16 @@ open class AudioSpliceUtils4Sync(
         val inFile: File,
         val beginMicroseconds: Long,
         val endMicroseconds: Long,
+        val offsetMicroseconds: Long = 0L,
     )
+
+    /**
+     * 重采样后的音频类
+     * @param file  重采样后的音频文件
+     * @param timeLocation  音频时刻与文件当时的字节数(业务场景是,第二个音频播放的起始位置不在第0秒,因此需要记录)
+     */
+    data class ResampleAudioBean(val file: File, var timeLocation: Map<Long, Long>? = null)
+
 
     private val channelCount = 2        //暂时写死为双声道
     private var maxSampleRate = 0       //统一的采样率
@@ -95,7 +118,7 @@ open class AudioSpliceUtils4Sync(
         }
     }
 
-    private val tempResampleOutFileEachList = mutableListOf<File>()
+    private val tempResampleOutFileEachList = mutableListOf<ResampleAudioBean>()
 
     private val queueList by lazy {
         mutableListOf<BlockingQueue<BufferTask>>().apply {
@@ -310,7 +333,7 @@ open class AudioSpliceUtils4Sync(
             )
 
             withContext(Dispatchers.IO) {
-                //找出最高或最低的采样率
+                //找出最高采样率
                 maxSampleRate = paramsList.first().sampleRate
                 maxSampleRateIndex = 0
                 paramsList.forEachIndexed { index, params ->
@@ -325,7 +348,7 @@ open class AudioSpliceUtils4Sync(
 
                 tempOutFileEachList.forEachIndexed { index, file ->
                     if (index == maxSampleRateIndex) {
-                        tempResampleOutFileEachList.add(file)
+                        tempResampleOutFileEachList.add(ResampleAudioBean(file))
                     } else {
                         val tempResampleOutFile = File(file.parent, file.name + ".resample")
                         FFmpegUtils().resample(
@@ -336,17 +359,23 @@ open class AudioSpliceUtils4Sync(
                             channelCount,
                             channelCount,
                         )
-                        tempResampleOutFileEachList.add(tempResampleOutFile)
+                        tempResampleOutFileEachList.add(ResampleAudioBean(file))
+                    }
+
+                    if (secondFileBeginLocation > 0 && index == 1) {
+                        tempResampleOutFileEachList[index].timeLocation = firstFileTimeLocation
                     }
                 }
 
                 BLog.i(
                     "重采样后,临时pcm文件地址为:\n${
                         tempResampleOutFileEachList.joinToString(separator = "\n") {
-                            it.absolutePath
+                            it.file.absolutePath
                         }
                     }"
                 )
+
+
 
                 onGetTempOutPcmFileList(outPcmFile, tempResampleOutFileEachList, maxSampleRate, channelCount)
 
@@ -382,6 +411,17 @@ open class AudioSpliceUtils4Sync(
             } * 0.5).toLong(),
             totalDurationMicroseconds
         )
+
+        if (fileIndex == 0 && secondFileBeginLocation > 0 && firstFileTimeLocation == null) {
+            if (bufferTask.presentationTimeUs >= secondFileBeginLocation) {
+                firstFileTimeLocation = mutableMapOf<Long, Long>().apply {
+                    val byte = writeChannelList[fileIndex].size()
+                    put(secondFileBeginLocation, byte)
+                    BLog.i("第一个文件,时间与文件大小关系,${TimeFormatUtils.format((secondFileBeginLocation / 1000_000L).toInt())}对应${byte}字节")
+                }
+            }
+        }
+
     }
 
     /**

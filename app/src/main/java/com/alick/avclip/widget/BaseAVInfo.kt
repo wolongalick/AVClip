@@ -9,7 +9,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.alick.avclip.R
 import com.alick.avclip.databinding.LayoutBaseAudioInfoBinding
 import com.alick.avsdk.MediaParser
-import com.alick.avsdk.bean.AudioBean
 import com.alick.avsdk.bean.MediaBean
 import com.alick.utilslibrary.T
 import com.alick.utilslibrary.TimeFormatUtils
@@ -28,6 +27,7 @@ class BaseAVInfo : ConstraintLayout {
     var onParseSuccess: ((filePath: String) -> Unit)? = null
 
     private var isEnableChangeVolume = false
+    private var isEnableChangeBeginLocation = false
 
     private enum class BAIMimeType(val mimeTypes: Array<String>, val hint: String) {
         OnlyAudio(arrayOf("audio/*"), "音频"),
@@ -40,9 +40,10 @@ class BaseAVInfo : ConstraintLayout {
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-        val typeArray = context.obtainStyledAttributes(attrs, R.styleable.BaseAudioInfo)
-        isEnableChangeVolume = typeArray.getBoolean(R.styleable.BaseAudioInfo_bai_isEnableChangeVolume, false)
-        mimeType = when (typeArray.getInt(R.styleable.BaseAudioInfo_bai_mimeType, 0)) {
+        val typeArray = context.obtainStyledAttributes(attrs, R.styleable.BaseAVInfo)
+        isEnableChangeVolume = typeArray.getBoolean(R.styleable.BaseAVInfo_bai_isEnableChangeVolume, false)
+        isEnableChangeBeginLocation = typeArray.getBoolean(R.styleable.BaseAVInfo_bai_isEnableChangeBeginLocation, false)
+        mimeType = when (typeArray.getInt(R.styleable.BaseAVInfo_bai_mimeType, 0)) {
             BAIMimeType.OnlyAudio.ordinal -> {
                 BAIMimeType.OnlyAudio
             }
@@ -78,6 +79,21 @@ class BaseAVInfo : ConstraintLayout {
         viewBinding.btnParse.setOnClickListener {
             parse(true)
         }
+
+        viewBinding.sbOffsetTime.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * mediaBean.durationOfMicroseconds / 1000_000L).toInt()
+                viewBinding.tvBeginLocationValue.text = TimeFormatUtils.format(durationOfSeconds)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+            }
+        })
 
         viewBinding.sbBegin.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
@@ -128,6 +144,15 @@ class BaseAVInfo : ConstraintLayout {
 
     private fun initView() {
         viewBinding.etSrcFilePath.hint = "请输入${mimeType.hint}文件路径"
+        if (isEnableChangeBeginLocation) {
+            viewBinding.tvBeginLocation.visibility = VISIBLE
+            viewBinding.tvBeginLocationValue.visibility = VISIBLE
+            viewBinding.sbOffsetTime.visibility = VISIBLE
+        } else {
+            viewBinding.tvBeginLocation.visibility = GONE
+            viewBinding.tvBeginLocationValue.visibility = GONE
+            viewBinding.sbOffsetTime.visibility = GONE
+        }
 
         if (isEnableChangeVolume) {
             viewBinding.tvVolume.visibility = View.VISIBLE
@@ -200,6 +225,10 @@ class BaseAVInfo : ConstraintLayout {
      * 设置进度条的总长度
      */
     private fun setupSeekBar(durationOfMicroseconds: Long) {
+        viewBinding.sbOffsetTime.apply {
+            max = durationOfMicroseconds.toInt()
+            progress = 0
+        }
         viewBinding.sbBegin.apply {
             max = durationOfMicroseconds.toInt()
             progress = 0
@@ -225,6 +254,20 @@ class BaseAVInfo : ConstraintLayout {
     }
 
     /**
+     * 获取偏移时间戳,单位:微秒
+     */
+    fun getOffsetMicroseconds(): Long {
+        return viewBinding.sbOffsetTime.progress.toLong()
+    }
+
+    /**
+     * 设置偏移时间戳,单位:微秒
+     */
+    fun setOffsetMicroseconds(offsetMicroseconds: Long) {
+        viewBinding.sbOffsetTime.progress = offsetMicroseconds.toInt()
+    }
+
+    /**
      * 获取开始时间戳,单位:微秒
      */
     fun getBeginMicroseconds(): Long {
@@ -236,6 +279,20 @@ class BaseAVInfo : ConstraintLayout {
      */
     fun getEndMicroseconds(): Long {
         return viewBinding.sbEnd.progress.toLong()
+    }
+
+    /**
+     * 设置开始时间戳,单位:微秒
+     */
+    fun setBeginMicroseconds(beginMicroseconds: Long) {
+        viewBinding.sbBegin.progress = beginMicroseconds.toInt()
+    }
+
+    /**
+     * 设置结束时间戳,单位:微秒
+     */
+    fun setEndMicroseconds(endMicroseconds: Long) {
+        viewBinding.sbEnd.progress = endMicroseconds.toInt()
     }
 
     /**

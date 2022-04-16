@@ -30,6 +30,7 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX1, it)
+                viewBinding.baseAudioInfo1.setEndMicroseconds(40_000_000L)
             }
         }
 
@@ -39,6 +40,8 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX2, it)
+                viewBinding.baseAudioInfo2.setOffsetMicroseconds(10_000_000L)
+                viewBinding.baseAudioInfo2.setEndMicroseconds(20_000_000L)
             }
         }
 
@@ -68,17 +71,19 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
                     AudioSpliceUtils4Sync.InFileEach(
                         File(viewBinding.baseAudioInfo2.getSrcFilePath()),
                         viewBinding.baseAudioInfo2.getBeginMicroseconds(),
-                        viewBinding.baseAudioInfo2.getEndMicroseconds()
+                        viewBinding.baseAudioInfo2.getEndMicroseconds(),
+                        offsetMicroseconds = viewBinding.baseAudioInfo2.getOffsetMicroseconds()
                     ),
                 ), outFile = outFile,
-                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<File>, sampleRate: Int, channelCount: Int ->
+                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<AudioSpliceUtils4Sync.ResampleAudioBean>, sampleRate: Int, channelCount: Int ->
                     BLog.i("准备将多个pcm文件混音")
                     AudioMix.mixPcm(
-                        tempOutFileList[0].absolutePath,
-                        tempOutFileList[1].absolutePath,
+                        tempOutFileList[0].file.absolutePath,
+                        tempOutFileList[1].file.absolutePath,
                         outPcmFile.absolutePath,
                         viewBinding.baseAudioInfo1.getVolume(),
-                        viewBinding.baseAudioInfo2.getVolume()
+                        viewBinding.baseAudioInfo2.getVolume(),
+                        tempOutFileList[1].timeLocation?.values?.lastOrNull() ?: 0
                     )
                     BLog.i("将多个pcm文件混音完毕,文件地址是:${outPcmFile.absolutePath}")
                 },

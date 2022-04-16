@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="BaseAudioInfo">
+    <declare-styleable name="BaseAVInfo">
         <attr name="bai_isEnableChangeVolume" format="boolean|reference" />
+        <attr name="bai_isEnableChangeBeginLocation" format="boolean|reference" />
         <!--支持的媒体类型-->
         <attr name="bai_mimeType" format="enum">
             <!--只支持音频-->

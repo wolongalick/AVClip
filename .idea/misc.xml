@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ASMIdeaPluginConfiguration">
-    <asm skipDebug="true" skipFrames="true" skipCode="false" expandFrames="false" />
+    <asm skipDebug="false" skipFrames="false" skipCode="false" expandFrames="false" />
     <groovy codeStyle="LEGACY" />
   </component>
   <component name="DesignSurface">
@@ -19,14 +19,14 @@
         <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/recent_apps_dialog.xml" value="0.27447916666666666" />
         <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/restrictions_pin_challenge.xml" value="0.27447916666666666" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_clip.xml" value="0.25" />
-        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_mix.xml" value="0.1" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_mix.xml" value="0.33" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_splice.xml" value="0.25" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_extract_audio.xml" value="0.21354166666666666" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_main.xml" value="0.19270833333333334" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_add_bgm.xml" value="0.22" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_clip.xml" value="0.10196406184705391" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/bottom_options.xml" value="0.24954710144927536" />
-        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_audio_info.xml" value="0.28541666666666665" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_audio_info.xml" value="0.33" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_info.xml" value="0.3046875" />
         <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_clip.xml" value="0.33" />
         <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_mix.xml" value="0.33" />
