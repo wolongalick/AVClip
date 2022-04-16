@@ -2,11 +2,10 @@ package com.alick.avclip.activity
 
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
-import com.alick.avclip.constant.AVConstant
+import com.alick.avsdk.util.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioSpliceBinding
 import com.alick.avclip.databinding.BottomOptionsBinding
-import com.alick.avclip.uitl.IntentUtils
 import com.alick.avsdk.splice.AudioSpliceUtils4Sync
 import com.alick.avsdk.util.AVUtils
 import com.alick.utilslibrary.*
@@ -24,7 +23,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
     override fun initListener() {
         viewBinding.baseAudioInfo1.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_1,it)
+                importMP3(SOURCE_CODE_1, it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_SPLICE1, it)
@@ -33,7 +32,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
 
         viewBinding.baseAudioInfo2.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_2,it)
+                importMP3(SOURCE_CODE_2, it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_SPLICE2, it)
@@ -42,7 +41,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
 
         viewBinding.baseAudioInfo3.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_3,it)
+                importMP3(SOURCE_CODE_3, it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_SPLICE3, it)
@@ -88,7 +87,7 @@ class AudioSpliceActivity : BaseAVActivity<ActivityAudioSpliceBinding>() {
                         viewBinding.baseAudioInfo3.getEndMicroseconds()
                     ),
                 ), outFile = outFile,
-                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<File> ->
+                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<File>, sampleRate: Int, channelCount: Int ->
                     BLog.i("准备将多个pcm文件合成")
                     AVUtils.appendAll(outPcmFile, files = tempOutFileList)
                     BLog.i("将多个pcm文件合成完毕,文件地址是:${outPcmFile.absolutePath}")

@@ -12,7 +12,6 @@ import java.io.FileOutputStream
 class AudioMix {
 
     companion object {
-        private const val MAX_SIZE = 2048   //每次读取的最大byte数组长度
 
         /**
          * 将两个pcm文件混音
@@ -33,10 +32,10 @@ class AudioMix {
             val vol2 = normalizeVolume(volume2)
 
             //一次读取多一点 2k
-            val buffer1 = ByteArray(MAX_SIZE)
-            val buffer2 = ByteArray(MAX_SIZE)
+            val buffer1 = ByteArray(AVConstant.MAX_SIZE)
+            val buffer2 = ByteArray(AVConstant.MAX_SIZE)
             //待输出数据
-            val targetBuffer = ByteArray(MAX_SIZE)
+            val targetBuffer = ByteArray(AVConstant.MAX_SIZE)
             val is1 = FileInputStream(pcm1Path)
             val is2 = FileInputStream(pcm2Path)
 

@@ -1,4 +1,4 @@
-package com.alick.avsdk.clip.video
+package com.alick.avsdk.clip
 
 import android.annotation.SuppressLint
 import android.media.MediaCodec
@@ -7,6 +7,7 @@ import android.media.MediaFormat
 import android.media.MediaMuxer
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.alick.avsdk.util.AVUtils
+import com.alick.utilslibrary.BLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,10 +65,11 @@ class VideoClipUtils(
 
                 clip(videoFormat, videoIndex)
                 clip(audioFormat, audioIndex)
+                BLog.i("正在视频裁剪,准备释放资源")
+                release()
                 withContext(Dispatchers.Main) {
                     onFinished()
                 }
-                release()
             }
         }
     }
@@ -76,12 +78,11 @@ class VideoClipUtils(
     @SuppressLint("WrongConstant")
     private suspend fun clip(mediaFormat: MediaFormat, trackIndex: Int) {
         mediaExtractor.selectTrack(trackIndex)
-        val videoByteBuffer = ByteBuffer.allocateDirect(AVUtils.getMaxInputSize(mediaFormat))
-        val videoInfo = MediaCodec.BufferInfo()
+        val byteBuffer = ByteBuffer.allocateDirect(AVUtils.getMaxInputSize(mediaFormat))
+        val bufferInfo = MediaCodec.BufferInfo()
         while (true) {
-            val readSize = mediaExtractor.readSampleData(videoByteBuffer, 0)
+            val readSize = mediaExtractor.readSampleData(byteBuffer, 0)
             if (readSize < 0) {
-                mediaExtractor.unselectTrack(trackIndex)
                 return
             }
 
@@ -104,11 +105,11 @@ class VideoClipUtils(
             }
 
             if (isInRange) {
-                videoInfo.size = readSize
-                videoInfo.presentationTimeUs = sampleTimeUs
-                videoInfo.flags = mediaExtractor.sampleFlags
+                bufferInfo.size = readSize
+                bufferInfo.presentationTimeUs = sampleTimeUs
+                bufferInfo.flags = mediaExtractor.sampleFlags
 
-                mediaMuxer.writeSampleData(trackIndex, videoByteBuffer, videoInfo)
+                mediaMuxer.writeSampleData(trackIndex, byteBuffer, bufferInfo)
                 mediaExtractor.advance()
 
                 withContext(Dispatchers.Main) {
@@ -119,8 +120,6 @@ class VideoClipUtils(
                     }
                 }
             }
-
-
         }
     }
 

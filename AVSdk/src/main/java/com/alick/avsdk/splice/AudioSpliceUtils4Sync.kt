@@ -28,9 +28,10 @@ open class AudioSpliceUtils4Sync(
     private val lifecycleCoroutineScope: LifecycleCoroutineScope,
     private val inFileEachList: MutableList<InFileEach>,
     private val outFile: File,
-    protected val onGetTempOutPcmFileList: (outPcmFile: File, TempOutFileList: MutableList<File>) -> Unit,
+    protected val onGetTempOutPcmFileList: (outPcmFile: File, tempOutFileList: MutableList<File>, sampleRate: Int, channelCount: Int) -> Unit,
     protected val onProgress: (progress: Long, max: Long) -> Unit,
     protected val onFinished: () -> Unit,
+    private val isNeedPcm2Mp3: Boolean = true,
 ) {
     class Params {
         val bufferSize = 1024 * 256
@@ -57,7 +58,7 @@ open class AudioSpliceUtils4Sync(
     private var maxSampleRateIndex = 0  //统一的采样率对应的文件索引
 
     private val outPcmFile by lazy {
-        val outPcmFile = File(outFile.absolutePath.replace(".mp3", ".pcm"))
+        val outPcmFile = File(outFile.absolutePath.replaceAfterLast(".mp3", ".pcm").replaceAfterLast(".mp4", ".pcm"))
         FileUtils.createFile(outPcmFile)
         outPcmFile
     }
@@ -125,7 +126,7 @@ open class AudioSpliceUtils4Sync(
             val sampleRate: Int = paramsList[maxSampleRateIndex].sampleRate
             BLog.i("统一后的pcm参数,声道数:${channelCount},比特率:${bitRate},采样率:${sampleRate}")
 
-            init(
+            initialized(
                 outPcmFile.absolutePath,
                 channelCount,
                 bitRate,
@@ -164,13 +165,7 @@ open class AudioSpliceUtils4Sync(
                     params.sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                     params.bitRate = mediaFormat.getInteger(MediaFormat.KEY_BIT_RATE)
                     params.channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                    params.maxBufferSize = if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
-                        //使用从实际媒体格式中取出的实际值
-                        mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
-                    } else {
-                        //使用默认值
-                        100 * 1000
-                    }
+                    params.maxBufferSize = AVUtils.getMaxInputSize(mediaFormat)
                     //创建解码器
                     params.mediaCodec = MediaCodec.createDecoderByType(mediaFormat.getString(MediaFormat.KEY_MIME)!!)
                     //配置解码器
@@ -238,8 +233,11 @@ open class AudioSpliceUtils4Sync(
                                 queueList[fileIndex].put(
                                     BufferTask(
                                         AVUtils.clone(it),
+                                        0,
                                         outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM,
-                                        outputBufferInfo.presentationTimeUs
+                                        outputBufferInfo.presentationTimeUs,
+                                        inFileEachList[fileIndex].beginMicroseconds,
+                                        inFileEachList[fileIndex].endMicroseconds,
                                     )
                                 )
                             }
@@ -350,13 +348,16 @@ open class AudioSpliceUtils4Sync(
                     }"
                 )
 
-                onGetTempOutPcmFileList(outPcmFile, tempResampleOutFileEachList)
-                lameUtils.encode(object : LameUtils.Callback {
-                    override fun onProgress(progress: Long, max: Long) {
-                        progressByPcmToMp3(progress, max)
-                    }
-                })
-                lameUtils.destroy()
+                onGetTempOutPcmFileList(outPcmFile, tempResampleOutFileEachList, maxSampleRate, channelCount)
+
+                if (isNeedPcm2Mp3) {
+                    lameUtils.encode(object : LameUtils.Callback {
+                        override fun onProgress(progress: Long, max: Long) {
+                            progressByPcmToMp3(progress, max)
+                        }
+                    })
+                    lameUtils.release()
+                }
             }
 
             withContext(Dispatchers.Main) {

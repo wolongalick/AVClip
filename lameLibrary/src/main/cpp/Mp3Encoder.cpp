@@ -48,6 +48,7 @@ long getUnreadFileSize(FILE *fp) {
 
 
 int Mp3Encoder::Encode(bool end_of_stream) {
+
     size_t readBufferSize;
     long unreadFileSize = getUnreadFileSize(pcmFile);
     if (unreadFileSize < bufferSize) {
@@ -72,6 +73,8 @@ int Mp3Encoder::Encode(bool end_of_stream) {
             }
         }
         size_t wroteSize = lame_encode_buffer(lameClient, leftBuffer, rightBuffer, (int) readBufferSize / 2, mp3_buffer, bufferSize);
+
+//        LOGI("pcm转码MP3,已写入文件大小:%ld", ftell(pcmFile))
         fwrite(mp3_buffer, 1, wroteSize, mp3File);
     }
 //    LOGI("pcm编码后文件position:%ld", ftell(pcmFile))

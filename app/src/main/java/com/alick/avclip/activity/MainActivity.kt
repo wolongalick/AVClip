@@ -69,6 +69,9 @@ class MainActivity : BaseAVActivity<ActivityMainBinding>() {
         viewBinding.tvVideoAddBGM.setOnClickListener {
             startActivity(Intent(this@MainActivity, VideoAddBGMActivity::class.java))
         }
+        viewBinding.tvExtractPcm.setOnClickListener {
+            startActivity(Intent(this@MainActivity, ExtractPcmActivity::class.java))
+        }
     }
 
     override fun initData() {

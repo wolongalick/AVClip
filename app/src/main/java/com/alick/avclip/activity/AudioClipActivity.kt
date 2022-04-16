@@ -2,12 +2,11 @@ package com.alick.avclip.activity
 
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
-import com.alick.avclip.constant.AVConstant
+import com.alick.avsdk.util.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioClipBinding
 import com.alick.avclip.databinding.BottomOptionsBinding
-import com.alick.avclip.uitl.IntentUtils
-import com.alick.avsdk.clip.AudioClipUtils4Sync
+import com.alick.avsdk.clip.AudioClipUtils
 import com.alick.utilslibrary.*
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
@@ -40,18 +39,18 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
 
             val beginTime = System.currentTimeMillis()
             val inFile = File(viewBinding.baseAudioInfo1.getSrcFilePath())
-            val outFile =
-                File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "音频裁剪-" + inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp3")
+            val outFile =  File(AppHolder.getApp().getExternalFilesDir(AVConstant.OUTPUT_DIR), "音频裁剪-" + inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp3")
             if (!clipDialog.isShowing) {
                 clipDialog.show()
             }
-            AudioClipUtils4Sync(
+            AudioClipUtils(
                 lifecycleScope,
                 inFile,
                 outFile,
                 viewBinding.baseAudioInfo1.getBeginMicroseconds(),
                 viewBinding.baseAudioInfo1.getEndMicroseconds(),
                 onProgress = { progress: Long, max: Long ->
+//                    BLog.i("音频截取进度,progress:${progress},max:${max}")
                     clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
                 }, onFinished = {
                     clipDialog.dismiss()

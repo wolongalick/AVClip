@@ -2,12 +2,11 @@ package com.alick.avclip.activity
 
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
-import com.alick.avclip.constant.AVConstant
+import com.alick.avsdk.util.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityVideoClipBinding
 import com.alick.avclip.databinding.BottomOptionsBinding
-import com.alick.avsdk.clip.AudioClipUtils4Sync
-import com.alick.avsdk.clip.video.VideoClipUtils
+import com.alick.avsdk.clip.VideoClipUtils
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.StorageUtils
 import com.alick.utilslibrary.T
@@ -52,8 +51,7 @@ class VideoClipActivity : BaseAVActivity<ActivityVideoClipBinding>() {
 
             val beginTime = System.currentTimeMillis()
             val inFile = File(viewBinding.baseAudioInfo1.getSrcFilePath())
-            val outFile =
-                File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "视频裁剪-"+inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp4")
+            val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "视频裁剪-" + inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp4")
             if (!clipDialog.isShowing) {
                 clipDialog.show()
             }

@@ -31,7 +31,8 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:bai_isEnableChangeVolume="true" />
+                app:bai_isEnableChangeVolume="true"
+                app:bai_mimeType="onlyVideo"/>
 
             <com.alick.avclip.widget.BaseAVInfo
                 android:id="@+id/baseAudioInfo2"

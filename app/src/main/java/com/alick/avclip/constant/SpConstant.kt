@@ -23,5 +23,9 @@ class SpConstant {
 
         /*视频裁剪常量*/
         const val VIDEO_FILE_PATH_OF_CLIP: String = "video_file_path_of_clip"
+
+
+        /*提取pcm常量*/
+        const val FILE_PATH_OF_EXTRACT_PCM: String = "file_path_of_extract_pcm"
     }
 }

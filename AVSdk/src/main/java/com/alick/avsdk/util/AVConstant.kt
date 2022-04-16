@@ -1,4 +1,4 @@
-package com.alick.avclip.constant
+package com.alick.avsdk.util
 
 /**
  * @createTime 2022/3/15 16:09
@@ -8,7 +8,8 @@ package com.alick.avclip.constant
 class AVConstant {
     companion object {
         const val OUTPUT_DIR = "output"
-
+        const val TIMEOUT_US = 0L
+        const val MAX_SIZE = 2048   //每次读取的最大byte数组长度
 
     }
 }

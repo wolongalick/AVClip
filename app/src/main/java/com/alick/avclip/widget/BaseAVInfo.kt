@@ -152,8 +152,8 @@ class BaseAVInfo : ConstraintLayout {
 
         val info: String = if (filePath.endsWith(".mp3", true)) {
             parseAudio(filePath)
-        } else if (filePath.endsWith(".mp4", true)) {
-            parseVideo(filePath)
+        } else if (filePath.endsWith(".mp4", true) || filePath.endsWith(".flv", true)) {
+            parseVideo(filePath) + "\n" + parseAudio(filePath)
         } else {
             ""
         }
@@ -170,7 +170,8 @@ class BaseAVInfo : ConstraintLayout {
         val sb = StringBuilder()
         MediaParser().parseAudio(filePath).let {
             mediaBean = it
-            sb.append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
+            sb.append("音频流------\n")
+                .append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
                 .append("缓冲区最大尺寸:${it.maxInputSize}\n")
                 .append("音频采样率:${it.sampleRate}\n")
                 .append("比特率:${it.bitrate}\n")
@@ -185,7 +186,8 @@ class BaseAVInfo : ConstraintLayout {
         val sb = StringBuilder()
         MediaParser().parseVideo(filePath).let {
             mediaBean = it
-            sb.append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
+            sb.append("视频流------\n")
+                .append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
                 .append("缓冲区最大尺寸:${it.maxInputSize}\n")
                 .append("宽:${it.width}\n")
                 .append("高:${it.height}\n")

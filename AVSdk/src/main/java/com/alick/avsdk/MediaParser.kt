@@ -48,6 +48,7 @@ class MediaParser {
         }
 
         val channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        mediaExtractor.release()
         return AudioBean(
             sampleRate, bitrate, durationOfMicroseconds, encoding, maxInputSize, channelCount
         )

@@ -2,15 +2,18 @@ package com.alick.avclip.activity
 
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
-import com.alick.avclip.constant.AVConstant
+import com.alick.avsdk.util.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityVideoAddBgmBinding
 import com.alick.avclip.databinding.BottomOptionsBinding
-import com.alick.avclip.uitl.IntentUtils
-import com.alick.avsdk.splice.AudioSpliceUtils4Sync
-import com.alick.avsdk.util.AudioMix
+import com.alick.avsdk.clip.AudioClipUtils
+import com.alick.avsdk.clip.VideoClipUtils
+import com.alick.avsdk.util.VideoAddBGMUtils
 import com.alick.utilslibrary.*
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -19,6 +22,12 @@ import java.io.File
  * @description 为视频添加背景音乐
  */
 class VideoAddBGMActivity : BaseAVActivity<ActivityVideoAddBgmBinding>() {
+
+    private var isVideoAddBGMing = false    //是否正在为视频添加BGM
+    private var clipVideoFile: File? = null
+    private var clipAudioFile: File? = null
+
+
     override fun getMaterialToolbar(): MaterialToolbar {
         return viewBinding.toolbar
     }
@@ -57,49 +66,80 @@ class VideoAddBGMActivity : BaseAVActivity<ActivityVideoAddBgmBinding>() {
             }
 
             val beginTime = System.currentTimeMillis()
-            val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "音频混音-" + TimeUtils.getCurrentTime() + ".mp3")
-            if (!clipDialog.isShowing) {
-                clipDialog.show()
-            }
-            AudioSpliceUtils4Sync(
-                lifecycleCoroutineScope = lifecycleScope, inFileEachList = mutableListOf(
-                    AudioSpliceUtils4Sync.InFileEach(
-                        File(viewBinding.baseAudioInfo1.getSrcFilePath()),
-                        viewBinding.baseAudioInfo1.getBeginMicroseconds(),
-                        viewBinding.baseAudioInfo1.getEndMicroseconds()
-                    ),
-                    AudioSpliceUtils4Sync.InFileEach(
-                        File(viewBinding.baseAudioInfo2.getSrcFilePath()),
-                        viewBinding.baseAudioInfo2.getBeginMicroseconds(),
-                        viewBinding.baseAudioInfo2.getEndMicroseconds()
-                    ),
-                ), outFile = outFile,
-                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<File> ->
-                    BLog.i("准备将多个pcm文件混音")
-                    AudioMix.mixPcm(
-                        tempOutFileList[0].absolutePath,
-                        tempOutFileList[1].absolutePath,
-                        outPcmFile.absolutePath,
-                        viewBinding.baseAudioInfo1.getVolume(),
-                        viewBinding.baseAudioInfo2.getVolume()
-                    )
-                    BLog.i("将多个pcm文件混音完毕,文件地址是:${outPcmFile.absolutePath}")
-                },
-                onProgress = { progress: Long, max: Long ->
-//                    BLog.i("总进度:${progress}/${max}")
-                    runOnUiThread {
-                        clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                    }
-                }, onFinished = {
-                    clipDialog.dismiss()
 
+            //===================================视频======
+            val inVideoFile = File(viewBinding.baseAudioInfo1.getSrcFilePath())
+            val outVideoFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "视频裁剪-" + inVideoFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp4")
+
+
+            VideoClipUtils(
+                lifecycleScope,
+                inVideoFile,
+                outVideoFile,
+                viewBinding.baseAudioInfo1.getBeginMicroseconds(),
+                viewBinding.baseAudioInfo1.getEndMicroseconds(),
+                onProgress = { progress: Long, max: Long ->
+                    clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
+                }, onFinished = {
                     //截取完成,输出所耗时长和文件输出路径
-                    val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.bottomOptions.tvSpendTimeValue.text = duration
-                    BLog.i("音频混音完毕,总耗时:${duration}")
-                    viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
+                    clipVideoFile = outVideoFile
+                    videoAddBGM(beginTime)
                 }
-            ).splice()
+            ).clip()
+
+            //===================================音频======
+            val inAudioFile = File(viewBinding.baseAudioInfo2.getSrcFilePath())
+            val outAudioFile = File(AppHolder.getApp().getExternalFilesDir(AVConstant.OUTPUT_DIR), "音频裁剪-" + inAudioFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp3")
+
+            AudioClipUtils(
+                lifecycleScope,
+                inAudioFile,
+                outAudioFile,
+                viewBinding.baseAudioInfo2.getBeginMicroseconds(),
+                viewBinding.baseAudioInfo2.getEndMicroseconds(),
+                onProgress = { progress: Long, max: Long ->
+//                    BLog.i("音频截取进度,progress:${progress},max:${max}")
+                    clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
+                }, onFinished = {
+                    //截取完成,输出所耗时长和文件输出路径
+                    clipAudioFile = outAudioFile
+                    videoAddBGM(beginTime)
+                }
+            ).clip()
+        }
+    }
+
+
+    private fun videoAddBGM(beginTime: Long) {
+        if (clipVideoFile == null || clipAudioFile == null || isVideoAddBGMing) {
+            return
+        }
+        isVideoAddBGMing = true
+        val outMixMusicFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "视频添加BGM-" + clipVideoFile!!.name)
+
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                val videoAudioMix = VideoAddBGMUtils(clipVideoFile!!, clipAudioFile!!, outMixMusicFile, viewBinding.baseAudioInfo1.getVolume(), viewBinding.baseAudioInfo2.getVolume())
+                try {
+                    videoAudioMix.mix()
+                    withContext(Dispatchers.Main) {
+                        val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
+                        T.show("为视频添加BGM成功!")
+                        BLog.i("为视频添加BGM成功!,文件路径:${outMixMusicFile.absolutePath},总耗时:${duration}")
+                        viewBinding.bottomOptions.tvOutputPathValue.text = outMixMusicFile.absolutePath
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    BLog.i(e.stackTraceToString())
+                    withContext(Dispatchers.Main) {
+                        BLog.w(e.stackTraceToString())
+                        T.show("为视频添加BGM失败:${e.message}")
+                        clipDialog.dismiss()
+                    }
+                } finally {
+                    isVideoAddBGMing = false
+                }
+            }
         }
     }
 
