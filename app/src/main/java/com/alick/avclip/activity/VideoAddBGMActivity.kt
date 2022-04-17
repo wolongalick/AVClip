@@ -119,7 +119,7 @@ class VideoAddBGMActivity : BaseAVActivity<ActivityVideoAddBgmBinding>() {
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                val videoAudioMix = VideoAddBGMUtils(clipVideoFile!!, clipAudioFile!!, outMixMusicFile, viewBinding.baseAudioInfo1.getVolume(), viewBinding.baseAudioInfo2.getVolume())
+                val videoAudioMix = VideoAddBGMUtils(clipVideoFile!!, clipAudioFile!!, outMixMusicFile, viewBinding.baseAudioInfo1.getVolume(), viewBinding.baseAudioInfo2.getVolume(),viewBinding.baseAudioInfo2.getOffsetMicroseconds())
                 try {
                     videoAudioMix.mix()
                     withContext(Dispatchers.Main) {

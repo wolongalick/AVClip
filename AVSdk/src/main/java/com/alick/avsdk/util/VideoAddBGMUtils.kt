@@ -17,13 +17,14 @@ import java.nio.ByteBuffer
  * @description
  */
 class VideoAddBGMUtils(
-    val inVideoFile: File,
-    val inAudioFile: File,
-    val outVideoFile: File,
+    private val inVideoFile: File,
+    private val inAudioFile: File,
+    private val outVideoFile: File,
     @IntRange(from = 0, to = 100)
-    val videoVolume: Int,
+    private val videoVolume: Int,
     @IntRange(from = 0, to = 100)
-    val audioVolume: Int
+    private val audioVolume: Int,
+    private val pcm2Offset: Long = 0L
 ) {
 
     fun mix() {
@@ -35,12 +36,14 @@ class VideoAddBGMUtils(
 
 
         val videoPcmFile = File(dir, inVideoFile.name.replaceAfterLast(".", "pcm"))
-        AVUtils.extractPcm(inVideoFile, videoPcmFile)
-        AVUtils.extractPcm(inVideoFile, videoPcmFile)
-            /*onFail = {
-                BLog.e("从视频提取pcm文件路径失败:${it}")
-                return@extractPcm
-            }*/
+        val timeOfSize: MutableMap<Long, Long> = mutableMapOf<Long, Long>().apply {
+            put(pcm2Offset, 0)
+        }
+        AVUtils.extractPcm(inVideoFile, videoPcmFile, timeOfSize = timeOfSize)
+        /*onFail = {
+            BLog.e("从视频提取pcm文件路径失败:${it}")
+            return@extractPcm
+        }*/
         BLog.i("从视频提取pcm文件路径:${videoPcmFile.absolutePath}")
 
         val audioPcmFile = File(dir, inAudioFile.name.replaceAfterLast(".", "pcm"))
@@ -96,7 +99,7 @@ class VideoAddBGMUtils(
         }
 
         val mixPcmFile = File(dir, "混音-" + inVideoFile.name.replaceAfterLast(".", "pcm"))
-        AudioMix.mixPcm(videoPcmResampleFile.absolutePath, audioPcmResampleFile.absolutePath, mixPcmFile.absolutePath, videoVolume, audioVolume)
+        AudioMix.mixPcm(videoPcmResampleFile.absolutePath, audioPcmResampleFile.absolutePath, mixPcmFile.absolutePath, videoVolume, audioVolume, timeOfSize[pcm2Offset]?:0L)
         BLog.i("混音完成,文件路径:${mixPcmFile.absolutePath}")
 
 

@@ -27,7 +27,7 @@ class BaseAVInfo : ConstraintLayout {
     var onParseSuccess: ((filePath: String) -> Unit)? = null
 
     private var isEnableChangeVolume = false
-    private var isEnableChangeBeginLocation = false
+    private var isEnableChangeOffset = false
 
     private enum class BAIMimeType(val mimeTypes: Array<String>, val hint: String) {
         OnlyAudio(arrayOf("audio/*"), "音频"),
@@ -42,7 +42,7 @@ class BaseAVInfo : ConstraintLayout {
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         val typeArray = context.obtainStyledAttributes(attrs, R.styleable.BaseAVInfo)
         isEnableChangeVolume = typeArray.getBoolean(R.styleable.BaseAVInfo_bai_isEnableChangeVolume, false)
-        isEnableChangeBeginLocation = typeArray.getBoolean(R.styleable.BaseAVInfo_bai_isEnableChangeBeginLocation, false)
+        isEnableChangeOffset = typeArray.getBoolean(R.styleable.BaseAVInfo_bai_isEnableChangeOffset, false)
         mimeType = when (typeArray.getInt(R.styleable.BaseAVInfo_bai_mimeType, 0)) {
             BAIMimeType.OnlyAudio.ordinal -> {
                 BAIMimeType.OnlyAudio
@@ -144,7 +144,7 @@ class BaseAVInfo : ConstraintLayout {
 
     private fun initView() {
         viewBinding.etSrcFilePath.hint = "请输入${mimeType.hint}文件路径"
-        if (isEnableChangeBeginLocation) {
+        if (isEnableChangeOffset) {
             viewBinding.tvBeginLocation.visibility = VISIBLE
             viewBinding.tvBeginLocationValue.visibility = VISIBLE
             viewBinding.sbOffsetTime.visibility = VISIBLE

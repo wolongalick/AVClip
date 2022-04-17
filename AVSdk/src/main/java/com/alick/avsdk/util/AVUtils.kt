@@ -4,12 +4,11 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import com.alick.avsdk.clip.BufferTask
-import com.alick.avsdk.exception.AVException
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.FileUtils
+import com.alick.utilslibrary.TimeFormatUtils
 import java.io.File
 import java.io.FileOutputStream
-import java.lang.Exception
 import java.lang.RuntimeException
 import java.nio.ByteBuffer
 
@@ -88,9 +87,13 @@ class AVUtils {
             outPcmFile: File,
             beginTimeUs: Long = 0,
             endTimeUs: Long? = null,
+            timeOfSize: MutableMap<Long, Long>? = null,//pcm文件的时间与当时的文件字节映射关系,key为时间,单位:微秒,value为文件大小,单位:byte,例如第10000000微秒的字节数是1024byte
             onProgress: ((progress: Long, max: Long, percent: Float, bufferTask: BufferTask) -> Unit)? = null,
             onFinish: (() -> Unit)? = null,
         ) {
+
+            val offsetTime: Long? = timeOfSize?.keys?.firstOrNull()
+
             val mediaExtractor = MediaExtractor()
             mediaExtractor.setDataSource(inAudioOrVideoFile.absolutePath)
 
@@ -158,6 +161,12 @@ class AVUtils {
                             //已解码时长(单位:微秒)
                             val decodedDuration = outputBufferInfo.presentationTimeUs - beginTimeUs
 
+                            if (offsetTime != null && decodedDuration >= offsetTime && timeOfSize[offsetTime]==0L) {
+                                val size = outFileChannel.size()
+                                timeOfSize[offsetTime] = size
+                                BLog.i("第一个文件,时间与文件大小关系,${TimeFormatUtils.format((offsetTime / 1000_000L).toInt())}对应${size}字节")
+                            }
+
                             //已解码的百分比
                             val percent = decodedDuration.toFloat() / totalDuration
 
@@ -192,15 +201,15 @@ class AVUtils {
             return if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
                 //使用从实际媒体格式中取出的实际值
                 mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE).let {
-                    if (it > 1024*1024) {
-                        1024*1024
+                    if (it > 1024 * 1024) {
+                        1024 * 1024
                     } else {
                         it
                     }
                 }
             } else {
                 //使用默认值
-                1024*1024
+                1024 * 1024
             }
         }
 

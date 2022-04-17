@@ -35,17 +35,17 @@ open class AudioSpliceUtils4Sync(
     private val isNeedPcm2Mp3: Boolean = true,
 ) {
 
-    //第二个音频播放的起始位置,单位:微秒
-    val secondFileBeginLocation: Long = if (inFileEachList.size > 1) {
+    //第二个音频播放偏移时间,单位:微秒
+    private val secondFileOffsetTime: Long = if (inFileEachList.size > 1) {
         inFileEachList[1].offsetMicroseconds
     } else {
         0
     }
 
     /**
-     * 第一个音频文件,时间戳与文件字节的映射关系
+     * 第一个音频文件,时间戳与文件大小的映射关系
      */
-    var firstFileTimeLocation: MutableMap<Long, Long>? = null
+    private var firstFileTimeOfSize: MutableMap<Long, Long>? = null
 
     class Params {
         val bufferSize = 1024 * 256
@@ -362,8 +362,8 @@ open class AudioSpliceUtils4Sync(
                         tempResampleOutFileEachList.add(ResampleAudioBean(file))
                     }
 
-                    if (secondFileBeginLocation > 0 && index == 1) {
-                        tempResampleOutFileEachList[index].timeLocation = firstFileTimeLocation
+                    if (secondFileOffsetTime > 0 && index == 1) {
+                        tempResampleOutFileEachList[index].timeLocation = firstFileTimeOfSize
                     }
                 }
 
@@ -412,12 +412,14 @@ open class AudioSpliceUtils4Sync(
             totalDurationMicroseconds
         )
 
-        if (fileIndex == 0 && secondFileBeginLocation > 0 && firstFileTimeLocation == null) {
-            if (bufferTask.presentationTimeUs >= secondFileBeginLocation) {
-                firstFileTimeLocation = mutableMapOf<Long, Long>().apply {
+        //只有当当前为第一个文件,且第二个文件偏移时间大于0,且未给第一个文件设置时间与文件位置的关系时,才需要处理
+        if (fileIndex == 0 && secondFileOffsetTime > 0 && firstFileTimeOfSize == null) {
+            //时间刚好达到需要偏移的时间时,立刻记录时间与文件大小的关系
+            if (bufferTask.presentationTimeUs >= secondFileOffsetTime) {
+                firstFileTimeOfSize = mutableMapOf<Long, Long>().apply {
                     val byte = writeChannelList[fileIndex].size()
-                    put(secondFileBeginLocation, byte)
-                    BLog.i("第一个文件,时间与文件大小关系,${TimeFormatUtils.format((secondFileBeginLocation / 1000_000L).toInt())}对应${byte}字节")
+                    put(secondFileOffsetTime, byte)
+                    BLog.i("第一个文件,时间与文件大小关系,${TimeFormatUtils.format((secondFileOffsetTime / 1000_000L).toInt())}对应${byte}字节")
                 }
             }
         }

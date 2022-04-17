@@ -23,7 +23,7 @@ class AudioMix {
          * @param toPath    输出的pcm文件路径
          * @param volume1   设置第一个pcm音量(最大值100)
          * @param volume2   设置第二个pcm音量(最大值100)
-         * @param pcm2BeginByteLocation 第二个pcm,在第一个pcm第XXX个字节位置开始混音
+         * @param pcm2Offset 第二个pcm开始混音的偏移位置,也就是在第一个pcm第XXX个字节位置开始混音
          */
         fun mixPcm(
             pcm1Path: String,
@@ -31,7 +31,7 @@ class AudioMix {
             toPath: String,
             @IntRange(from = 0, to = 100) volume1: Int,
             @IntRange(from = 0, to = 100) volume2: Int,
-            pcm2BeginByteLocation: Long = 0L,
+            pcm2Offset: Long = 0L,
         ) {
             val vol1 = normalizeVolume(volume1)
             val vol2 = normalizeVolume(volume2)
@@ -52,9 +52,9 @@ class AudioMix {
             var end1 = false
             var end2 = false
 
-            /**pcm2文件是否需要等待pcm1读取到[pcm2BeginByteLocation]字节时才开始读取*/
-            val isNeedWait: Boolean = pcm2BeginByteLocation > 0L
-            BLog.i("pcm2BeginByteLocation:${pcm2BeginByteLocation}")
+            /**pcm2文件是否需要等待pcm1读取到[pcm2Offset]字节时才开始读取*/
+            val isNeedWait: Boolean = pcm2Offset > 0L
+            BLog.i("pcm2BeginByteLocation:${pcm2Offset}")
             var totalReadSize1 = 0
             while (!(end1 && end2)) {
                 val readSize1 = is1.read(buffer1)
@@ -62,8 +62,7 @@ class AudioMix {
                 if (!end1) {
                     totalReadSize1 += readSize1
                 }
-                BLog.i("totalReadSize1:${totalReadSize1}")
-                if (isNeedWait && totalReadSize1 < pcm2BeginByteLocation && !end1) {
+                if (isNeedWait && totalReadSize1 < pcm2Offset && !end1) {
                     //将第1个音频多余的部分直接拷贝到目标数组
                     System.arraycopy(buffer1, 0, targetBuffer, 0, readSize1)
                 } else {

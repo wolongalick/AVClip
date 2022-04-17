@@ -2,7 +2,7 @@
 <resources>
     <declare-styleable name="BaseAVInfo">
         <attr name="bai_isEnableChangeVolume" format="boolean|reference" />
-        <attr name="bai_isEnableChangeBeginLocation" format="boolean|reference" />
+        <attr name="bai_isEnableChangeOffset" format="boolean|reference" />
         <!--支持的媒体类型-->
         <attr name="bai_mimeType" format="enum">
             <!--只支持音频-->
