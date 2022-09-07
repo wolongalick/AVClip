@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="BaseAudioInfo">
-        <attr name="isEnableChangeVolume" format="boolean|reference" />
+    <declare-styleable name="BaseAVInfo">
+        <attr name="bai_isEnableChangeVolume" format="boolean|reference" />
+        <attr name="bai_isEnableChangeOffset" format="boolean|reference" />
+        <!--支持的媒体类型-->
+        <attr name="bai_mimeType" format="enum">
+            <!--只支持音频-->
+            <enum name="onlyAudio" value="0" />
+            <!--只支持视频-->
+            <enum name="onlyVideo" value="1" />
+            <!--既支持音频又支持视频-->
+            <enum name="audioAndVideo" value="2" />
+        </attr>
     </declare-styleable>
 </resources>

@@ -13,7 +13,8 @@ import java.util.Date;
  */
 @SuppressLint("SimpleDateFormat")
 public class TimeUtils {
-    public static final String format1  = "yyyy-MM-dd HH:mm:ss";
+//    public static final String format1  = "yyyy-MM-dd HH:mm:ss";
+    public static final String format1  = "yyyy-MM-dd HH：mm：ss";
     public static final String format2  = "yyyy-MM-dd";
     public static final String format3  = "yy-MM-dd";
     public static final String format4  = "yyyy-MM-dd HH:mm";

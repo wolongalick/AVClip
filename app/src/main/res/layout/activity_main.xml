@@ -28,5 +28,33 @@
         android:text="音频混音"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAudioSplice" />
+    <Button
+        android:id="@+id/tvVideoClip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="视频裁剪"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAudioMix" />
+    <Button
+        android:id="@+id/tvVideoAddBGM"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="为视频添加背景音乐"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvVideoClip" />
+    <Button
+        android:id="@+id/tvExtractPcm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="提取pcm"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvVideoAddBGM" />
+    <Button
+        android:id="@+id/tvBeginCreation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="开始创作"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvVideoAddBGM" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

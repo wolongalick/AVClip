@@ -1,9 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.alick.avclip">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+    <!--PictureSelector 图片/视频选择库所需权限-begin-->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <!--PictureSelector 图片/视频选择库所需权限-end-->
 
     <application
         android:allowBackup="true"
@@ -12,7 +35,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AVClip"
-        android:name=".BaseApplication">
+        android:name=".BaseApplication"
+        android:requestLegacyExternalStorage="true">
         <activity
             android:name=".activity.MainActivity"
             android:exported="true">
@@ -37,6 +61,10 @@
         <activity android:name=".activity.AudioClipActivity" />
         <activity android:name=".activity.AudioSpliceActivity" />
         <activity android:name=".activity.AudioMixActivity" />
+        <activity android:name=".activity.VideoAddBGMActivity" />
+        <activity android:name=".activity.VideoClipActivity" />
+        <activity android:name=".activity.ExtractPcmActivity" />
+        <activity android:name=".activity.EditActivity" />
     </application>
 
 </manifest>

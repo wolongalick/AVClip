@@ -1,12 +1,11 @@
 package com.alick.avclip.activity
 
-import android.app.ProgressDialog
 import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
-import com.alick.avclip.constant.AVConstant
+import com.alick.avsdk.util.AVConstant
 import com.alick.avclip.constant.SpConstant
 import com.alick.avclip.databinding.ActivityAudioMixBinding
-import com.alick.avclip.uitl.IntentUtils
+import com.alick.avclip.databinding.BottomOptionsBinding
 import com.alick.avsdk.splice.AudioSpliceUtils4Sync
 import com.alick.avsdk.util.AudioMix
 import com.alick.utilslibrary.*
@@ -20,25 +19,6 @@ import java.io.File
  * @date 2022/4/1 21:59
  */
 class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
-
-    companion object {
-        private const val SOURCE_CODE_1 = 1
-        private const val SOURCE_CODE_2 = 2
-        private const val SOURCE_CODE_3 = 3
-    }
-
-    private val maxProgress = 100
-
-    private val clipDialog: ProgressDialog by lazy {
-        val progressDialog = ProgressDialog(this)
-        progressDialog.progress = 0
-        progressDialog.max = maxProgress
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-        progressDialog.setCancelable(false)
-        progressDialog.setCanceledOnTouchOutside(false)
-        progressDialog
-    }
-
     override fun getMaterialToolbar(): MaterialToolbar {
         return viewBinding.toolbar
     }
@@ -46,23 +26,26 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
     override fun initListener() {
         viewBinding.baseAudioInfo1.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_1)
+                importMP3(SOURCE_CODE_1, it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX1, it)
+                viewBinding.baseAudioInfo1.setEndMicroseconds(40_000_000L)
             }
         }
 
         viewBinding.baseAudioInfo2.apply {
             onClickImport = {
-                importMP3(SOURCE_CODE_2)
+                importMP3(SOURCE_CODE_2, it)
             }
             onParseSuccess = {
                 StorageUtils.setString(SpConstant.AUDIO_FILE_PATH_OF_MIX2, it)
+                viewBinding.baseAudioInfo2.setOffsetMicroseconds(10_000_000L)
+                viewBinding.baseAudioInfo2.setEndMicroseconds(20_000_000L)
             }
         }
 
-        viewBinding.btnBegin.setOnClickListener {
+        viewBinding.bottomOptions.btnBegin.setOnClickListener {
             if (viewBinding.baseAudioInfo1.checkRange() <= 0) {
                 T.show("第1个音频的截取的起始时间应该小于结束时间")
                 return@setOnClickListener
@@ -88,17 +71,19 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
                     AudioSpliceUtils4Sync.InFileEach(
                         File(viewBinding.baseAudioInfo2.getSrcFilePath()),
                         viewBinding.baseAudioInfo2.getBeginMicroseconds(),
-                        viewBinding.baseAudioInfo2.getEndMicroseconds()
+                        viewBinding.baseAudioInfo2.getEndMicroseconds(),
+                        offsetMicroseconds = viewBinding.baseAudioInfo2.getOffsetMicroseconds()
                     ),
                 ), outFile = outFile,
-                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<File> ->
+                onGetTempOutPcmFileList = { outPcmFile: File, tempOutFileList: MutableList<AudioSpliceUtils4Sync.ResampleAudioBean>, sampleRate: Int, channelCount: Int ->
                     BLog.i("准备将多个pcm文件混音")
                     AudioMix.mixPcm(
-                        tempOutFileList[0].absolutePath,
-                        tempOutFileList[1].absolutePath,
+                        tempOutFileList[0].file.absolutePath,
+                        tempOutFileList[1].file.absolutePath,
                         outPcmFile.absolutePath,
                         viewBinding.baseAudioInfo1.getVolume(),
-                        viewBinding.baseAudioInfo2.getVolume()
+                        viewBinding.baseAudioInfo2.getVolume(),
+                        tempOutFileList[1].timeLocation?.values?.lastOrNull() ?: 0
                     )
                     BLog.i("将多个pcm文件混音完毕,文件地址是:${outPcmFile.absolutePath}")
                 },
@@ -112,30 +97,14 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
 
                     //截取完成,输出所耗时长和文件输出路径
                     val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.tvSpendTimeValue.text = duration
+                    viewBinding.bottomOptions.tvSpendTimeValue.text = duration
                     BLog.i("音频混音完毕,总耗时:${duration}")
-                    viewBinding.tvOutputPathValue.text = outFile.absolutePath
+                    viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
                 }
             ).splice()
         }
 
-        viewBinding.btnCopy.setOnClickListener {
-            val path = viewBinding.tvOutputPathValue.text.toString()
-            if (path.isBlank()) {
-                T.show("路径为空")
-                return@setOnClickListener
-            }
-            EditTextUtils.copy2Clipboard(AppHolder.getApp(), path)
-            T.show("复制成功")
-        }
 
-        viewBinding.btnPlay.setOnClickListener {
-            if (viewBinding.tvOutputPathValue.text.toString().isBlank()) {
-                T.show("输出路径不能为空")
-                return@setOnClickListener
-            }
-            startActivity(IntentUtils.getAudioFileIntent(viewBinding.tvOutputPathValue.text.toString()))
-        }
     }
 
     override fun initData() {
@@ -166,6 +135,13 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
                 }
             }
         }
+    }
+
+    /**
+     * 获取底部选项Binding
+     */
+    override fun getBottomOptionsBinding(): BottomOptionsBinding {
+        return viewBinding.bottomOptions
     }
 
 }

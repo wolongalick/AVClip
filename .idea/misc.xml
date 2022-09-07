@@ -18,13 +18,30 @@
         <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/progress_dialog_material.xml" value="0.27447916666666666" />
         <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/recent_apps_dialog.xml" value="0.27447916666666666" />
         <entry key="..\:/Android_sdk_for_AS/platforms/android-31/data/res/layout/restrictions_pin_challenge.xml" value="0.27447916666666666" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/drawable/play_selector.xml" value="0.204" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/drawable/ps_image_placeholder.xml" value="0.2645" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_clip.xml" value="0.25" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_mix.xml" value="0.33" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_splice.xml" value="0.25" />
-        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_audio_info.xml" value="0.28541666666666665" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_edit.xml" value="0.2" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_extract_audio.xml" value="0.21354166666666666" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_home.xml" value="0.2394185549380077" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_add_bgm.xml" value="0.22" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_clip.xml" value="0.10196406184705391" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/bottom_options.xml" value="0.24954710144927536" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_audio_info.xml" value="0.33" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_info.xml" value="0.3046875" />
-        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_clip.xml" value="0.5" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_clip.xml" value="0.33" />
         <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_mix.xml" value="0.33" />
         <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_splice.xml" value="0.21784420289855072" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_edit.xml" value="0.20989583333333334" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_extract_audio.xml" value="0.19114583333333332" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_extract_pcm.xml" value="0.33" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_add_bgm.xml" value="0.23958333333333334" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_clip.xml" value="0.33" />
+        <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/bottom_options.xml" value="0.26510416666666664" />
         <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_audio_info.xml" value="0.25" />
       </map>
     </option>

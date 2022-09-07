@@ -10,8 +10,8 @@ class AudioBean(
     val bitrate: Int,
     durationOfSecond: Long,
     val pcmEncoding: Int,
-    val maxInputSize: Int,
+    maxInputSize: Int,
     val channelCount:Int,
-) : MediaBean(durationOfSecond) {
+) : MediaBean(durationOfSecond,maxInputSize) {
 
 }

@@ -5,12 +5,13 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import androidx.lifecycle.LifecycleCoroutineScope
-import com.alick.avsdk.clip.AbsAudioClipUtils
+import com.alick.avsdk.clip.BufferTask
 import com.alick.avsdk.util.AVUtils
 import com.alick.ffmpeglibrary.FFmpegUtils
 import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.FileUtils
+import com.alick.utilslibrary.TimeFormatUtils
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
@@ -28,10 +29,24 @@ open class AudioSpliceUtils4Sync(
     private val lifecycleCoroutineScope: LifecycleCoroutineScope,
     private val inFileEachList: MutableList<InFileEach>,
     private val outFile: File,
-    protected val onGetTempOutPcmFileList: (outPcmFile: File, TempOutFileList: MutableList<File>) -> Unit,
+    protected val onGetTempOutPcmFileList: (outPcmFile: File, tempOutFileList: MutableList<ResampleAudioBean>, sampleRate: Int, channelCount: Int) -> Unit,
     protected val onProgress: (progress: Long, max: Long) -> Unit,
     protected val onFinished: () -> Unit,
+    private val isNeedPcm2Mp3: Boolean = true,
 ) {
+
+    //第二个音频播放偏移时间,单位:微秒
+    private val secondFileOffsetTime: Long = if (inFileEachList.size > 1) {
+        inFileEachList[1].offsetMicroseconds
+    } else {
+        0
+    }
+
+    /**
+     * 第一个音频文件,时间戳与文件大小的映射关系
+     */
+    private var firstFileTimeOfSize: MutableMap<Long, Long>? = null
+
     class Params {
         val bufferSize = 1024 * 256
         var sampleRate: Int = 0
@@ -50,14 +65,23 @@ open class AudioSpliceUtils4Sync(
         val inFile: File,
         val beginMicroseconds: Long,
         val endMicroseconds: Long,
+        val offsetMicroseconds: Long = 0L,
     )
+
+    /**
+     * 重采样后的音频类
+     * @param file  重采样后的音频文件
+     * @param timeLocation  音频时刻与文件当时的字节数(业务场景是,第二个音频播放的起始位置不在第0秒,因此需要记录)
+     */
+    data class ResampleAudioBean(val file: File, var timeLocation: Map<Long, Long>? = null)
+
 
     private val channelCount = 2        //暂时写死为双声道
     private var maxSampleRate = 0       //统一的采样率
     private var maxSampleRateIndex = 0  //统一的采样率对应的文件索引
 
     private val outPcmFile by lazy {
-        val outPcmFile = File(outFile.absolutePath.replace(".mp3", ".pcm"))
+        val outPcmFile = File(outFile.absolutePath.replaceAfterLast(".mp3", ".pcm").replaceAfterLast(".mp4", ".pcm"))
         FileUtils.createFile(outPcmFile)
         outPcmFile
     }
@@ -94,12 +118,12 @@ open class AudioSpliceUtils4Sync(
         }
     }
 
-    private val tempResampleOutFileEachList = mutableListOf<File>()
+    private val tempResampleOutFileEachList = mutableListOf<ResampleAudioBean>()
 
     private val queueList by lazy {
-        mutableListOf<BlockingQueue<AbsAudioClipUtils.BufferTask>>().apply {
+        mutableListOf<BlockingQueue<BufferTask>>().apply {
             repeat(inFileEachList.size) {
-                val queue: BlockingQueue<AbsAudioClipUtils.BufferTask> by lazy {
+                val queue: BlockingQueue<BufferTask> by lazy {
                     ArrayBlockingQueue(5000)
                 }
                 add(queue)
@@ -125,7 +149,7 @@ open class AudioSpliceUtils4Sync(
             val sampleRate: Int = paramsList[maxSampleRateIndex].sampleRate
             BLog.i("统一后的pcm参数,声道数:${channelCount},比特率:${bitRate},采样率:${sampleRate}")
 
-            init(
+            initialized(
                 outPcmFile.absolutePath,
                 channelCount,
                 bitRate,
@@ -164,13 +188,7 @@ open class AudioSpliceUtils4Sync(
                     params.sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                     params.bitRate = mediaFormat.getInteger(MediaFormat.KEY_BIT_RATE)
                     params.channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                    params.maxBufferSize = if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
-                        //使用从实际媒体格式中取出的实际值
-                        mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
-                    } else {
-                        //使用默认值
-                        100 * 1000
-                    }
+                    params.maxBufferSize = AVUtils.getMaxInputSize(mediaFormat)
                     //创建解码器
                     params.mediaCodec = MediaCodec.createDecoderByType(mediaFormat.getString(MediaFormat.KEY_MIME)!!)
                     //配置解码器
@@ -236,10 +254,13 @@ open class AudioSpliceUtils4Sync(
                             decodeOutputBuffer?.let {
                                 //这里克隆一份新的ByteBuffer的原因是:如果不可隆,获取完ByteBuffer立即调用releaseOutputBuffer,会导致有杂音,而用克隆出来的ByteBuffer,再releaseOutputBuffer就不会有影响
                                 queueList[fileIndex].put(
-                                    AbsAudioClipUtils.BufferTask(
+                                    BufferTask(
                                         AVUtils.clone(it),
+                                        0,
                                         outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM,
-                                        outputBufferInfo.presentationTimeUs
+                                        outputBufferInfo.presentationTimeUs,
+                                        inFileEachList[fileIndex].beginMicroseconds,
+                                        inFileEachList[fileIndex].endMicroseconds,
                                     )
                                 )
                             }
@@ -312,7 +333,7 @@ open class AudioSpliceUtils4Sync(
             )
 
             withContext(Dispatchers.IO) {
-                //找出最高或最低的采样率
+                //找出最高采样率
                 maxSampleRate = paramsList.first().sampleRate
                 maxSampleRateIndex = 0
                 paramsList.forEachIndexed { index, params ->
@@ -327,7 +348,7 @@ open class AudioSpliceUtils4Sync(
 
                 tempOutFileEachList.forEachIndexed { index, file ->
                     if (index == maxSampleRateIndex) {
-                        tempResampleOutFileEachList.add(file)
+                        tempResampleOutFileEachList.add(ResampleAudioBean(file))
                     } else {
                         val tempResampleOutFile = File(file.parent, file.name + ".resample")
                         FFmpegUtils().resample(
@@ -338,25 +359,34 @@ open class AudioSpliceUtils4Sync(
                             channelCount,
                             channelCount,
                         )
-                        tempResampleOutFileEachList.add(tempResampleOutFile)
+                        tempResampleOutFileEachList.add(ResampleAudioBean(file))
+                    }
+
+                    if (secondFileOffsetTime > 0 && index == 1) {
+                        tempResampleOutFileEachList[index].timeLocation = firstFileTimeOfSize
                     }
                 }
 
                 BLog.i(
                     "重采样后,临时pcm文件地址为:\n${
                         tempResampleOutFileEachList.joinToString(separator = "\n") {
-                            it.absolutePath
+                            it.file.absolutePath
                         }
                     }"
                 )
 
-                onGetTempOutPcmFileList(outPcmFile, tempResampleOutFileEachList)
-                lameUtils.encode(object : LameUtils.Callback {
-                    override fun onProgress(progress: Long, max: Long) {
-                        progressByPcmToMp3(progress, max)
-                    }
-                })
-                lameUtils.destroy()
+
+
+                onGetTempOutPcmFileList(outPcmFile, tempResampleOutFileEachList, maxSampleRate, channelCount)
+
+                if (isNeedPcm2Mp3) {
+                    lameUtils.encode(object : LameUtils.Callback {
+                        override fun onProgress(progress: Long, max: Long) {
+                            progressByPcmToMp3(progress, max)
+                        }
+                    })
+                    lameUtils.release()
+                }
             }
 
             withContext(Dispatchers.Main) {
@@ -368,7 +398,7 @@ open class AudioSpliceUtils4Sync(
     /**
      * 写入pcm文件的进度
      */
-    private fun progressByWritePcm(fileIndex: Int, bufferTask: AbsAudioClipUtils.BufferTask) {
+    private fun progressByWritePcm(fileIndex: Int, bufferTask: BufferTask) {
         val inFileEach = inFileEachList[fileIndex]
         progressList[fileIndex] = bufferTask.presentationTimeUs - inFileEach.beginMicroseconds
         onProgress(
@@ -381,6 +411,19 @@ open class AudioSpliceUtils4Sync(
             } * 0.5).toLong(),
             totalDurationMicroseconds
         )
+
+        //只有当当前为第一个文件,且第二个文件偏移时间大于0,且未给第一个文件设置时间与文件位置的关系时,才需要处理
+        if (fileIndex == 0 && secondFileOffsetTime > 0 && firstFileTimeOfSize == null) {
+            //时间刚好达到需要偏移的时间时,立刻记录时间与文件大小的关系
+            if (bufferTask.presentationTimeUs >= secondFileOffsetTime) {
+                firstFileTimeOfSize = mutableMapOf<Long, Long>().apply {
+                    val byte = writeChannelList[fileIndex].size()
+                    put(secondFileOffsetTime, byte)
+                    BLog.i("第一个文件,时间与文件大小关系,${TimeFormatUtils.format((secondFileOffsetTime / 1000_000L).toInt())}对应${byte}字节")
+                }
+            }
+        }
+
     }
 
     /**

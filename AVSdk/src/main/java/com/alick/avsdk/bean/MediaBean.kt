@@ -6,5 +6,6 @@ package com.alick.avsdk.bean
  * @date 2022/3/13 21:22
  */
 open class MediaBean(
-    val durationOfMicroseconds: Long  //时长(单位:微秒)
+    val durationOfMicroseconds: Long,  //时长(单位:微秒)
+    val maxInputSize: Int,
 )

@@ -19,3 +19,15 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+#----------------------------PictureSelector混淆-begin----------------------------
+-keep class com.luck.picture.lib.** { *; }
+
+#如果引入了Camerax库请添加混淆
+-keep class com.luck.lib.camerax.** { *; }
+
+#如果引入了Ucrop库请添加混淆
+-dontwarn com.yalantis.ucrop**
+-keep class com.yalantis.ucrop** { *; }
+-keep interface com.yalantis.ucrop** { *; }
+#----------------------------PictureSelector混淆-end----------------------------

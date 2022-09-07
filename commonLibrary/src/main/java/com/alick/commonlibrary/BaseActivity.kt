@@ -30,6 +30,7 @@ abstract class BaseActivity<Binding : ViewBinding> : AppCompatActivity() {
         }
 
         initListener()
+        initListenerAfter()
         initData()
     }
 
@@ -58,6 +59,10 @@ abstract class BaseActivity<Binding : ViewBinding> : AppCompatActivity() {
      * 初始化监听事件
      */
     abstract fun initListener()
+
+    open fun initListenerAfter(){
+
+    }
 
     /**
      * 初始化数据

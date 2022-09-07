@@ -174,17 +174,27 @@ public class UriUtils {
 
     /**
      * 将uri转成文件绝对路径
+     *
      * @param context
      * @param uri
      * @return
      */
-    public static String uri2FilePath(Context context, Uri uri) {
-        String[] projection = {MediaStore.Images.Media.DATA};
-        Cursor   cursor     = context.getContentResolver().query(uri, projection, null, null, null);
-        cursor.moveToFirst();
-        int    columnIndex = cursor.getColumnIndex(projection[0]);
-        String path        = cursor.getString(columnIndex);
-        cursor.close();
-        return path;
+//    public static String uri2FilePath(Context context, Uri uri) {
+//        String[] projection = {MediaStore.DownloadColumns.DATA};
+//        Cursor   cursor     = context.getContentResolver().query(uri, projection, null, null, null);
+//        cursor.moveToFirst();
+//        int    columnIndex = cursor.getColumnIndex(projection[0]);
+//        String path        = cursor.getString(columnIndex);
+//        cursor.close();
+//        return path;
+//    }
+
+    public static String  uri2FilePath(Context context,Uri uri) {
+        String[] proj                      = {MediaStore.Images.Media.DATA};
+        Cursor   actualimagecursor         = context.getContentResolver().query(uri, proj, null, null, null);
+        int      actual_image_column_index = actualimagecursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        actualimagecursor.moveToFirst();
+        String img_path = actualimagecursor.getString(actual_image_column_index);
+        return img_path;
     }
 }

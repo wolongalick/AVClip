@@ -5,6 +5,7 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.os.Build
 import com.alick.avsdk.bean.AudioBean
+import com.alick.avsdk.bean.VideoBean
 
 /**
  * @author 崔兴旺
@@ -38,12 +39,50 @@ class MediaParser {
         } else {
             AudioFormat.ENCODING_PCM_16BIT
         }
-        val maxInputSize = mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)//缓冲区最大尺寸
-        val channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-        return AudioBean(
-            sampleRate, bitrate, durationOfMicroseconds,encoding,maxInputSize,channelCount
-        )
 
+        //缓冲区最大尺寸
+        val maxInputSize = if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+            mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
+        } else {
+            -1
+        }
+
+        val channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        mediaExtractor.release()
+        return AudioBean(
+            sampleRate, bitrate, durationOfMicroseconds, encoding, maxInputSize, channelCount
+        )
     }
 
+    fun parseVideo(filePath: String): VideoBean {
+        val mediaExtractor = MediaExtractor()
+        mediaExtractor.setDataSource(filePath)
+
+        val trackIndex = mediaExtractor.let {
+            for (i in 0..it.trackCount) {
+                val trackFormat = mediaExtractor.getTrackFormat(i)
+                if (trackFormat.getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true) {
+                    return@let i
+                }
+            }
+            return@let 0
+        }
+
+        mediaExtractor.selectTrack(trackIndex)
+        val mediaFormat = mediaExtractor.getTrackFormat(trackIndex)
+
+        val durationOfMicroseconds = mediaFormat.getLong(MediaFormat.KEY_DURATION)//时长单位:微秒
+
+        //缓冲区最大尺寸
+        val maxInputSize = if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+            mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
+        } else {
+            -1
+        }
+
+        val width = mediaFormat.getInteger(MediaFormat.KEY_WIDTH)
+        val height = mediaFormat.getInteger(MediaFormat.KEY_HEIGHT)
+        val frameRate = mediaFormat.getInteger(MediaFormat.KEY_FRAME_RATE)
+        return VideoBean(durationOfMicroseconds,maxInputSize,width, height,frameRate)
+    }
 }
