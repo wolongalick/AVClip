@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.media.*
 import androidx.annotation.IntRange
 import com.alick.avsdk.MediaParser
+import com.alick.avsdk.clip.BufferTask
 import com.alick.ffmpeglibrary.FFmpegUtils
 import com.alick.utilslibrary.AppHolder
 import com.alick.utilslibrary.BLog
@@ -39,18 +40,17 @@ class VideoAddBGMUtils(
         val timeOfSize: MutableMap<Long, Long> = mutableMapOf<Long, Long>().apply {
             put(pcm2Offset, 0)
         }
-        AVUtils.extractPcm(inVideoFile, videoPcmFile, timeOfSize = timeOfSize)
-        /*onFail = {
-            BLog.e("从视频提取pcm文件路径失败:${it}")
-            return@extractPcm
-        }*/
+        AVUtils.extractPcm(inVideoFile, videoPcmFile, timeOfSize = timeOfSize, onProgress = { progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
+
+
+        })
         BLog.i("从视频提取pcm文件路径:${videoPcmFile.absolutePath}")
 
         val audioPcmFile = File(dir, inAudioFile.name.replaceAfterLast(".", "pcm"))
-        AVUtils.extractPcm(inAudioFile, audioPcmFile)
-        /*onFail = {
-            BLog.e("从音频提取pcm文件路径失败:${it}")
-        }*/
+        AVUtils.extractPcm(inAudioFile, audioPcmFile,onProgress={progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
+
+
+        })
 
         BLog.i("从音提取pcm文件路径:${audioPcmFile.absolutePath}")
 
@@ -99,7 +99,7 @@ class VideoAddBGMUtils(
         }
 
         val mixPcmFile = File(dir, "混音-" + inVideoFile.name.replaceAfterLast(".", "pcm"))
-        AudioMix.mixPcm(videoPcmResampleFile.absolutePath, audioPcmResampleFile.absolutePath, mixPcmFile.absolutePath, videoVolume, audioVolume, timeOfSize[pcm2Offset]?:0L)
+        AudioMix.mixPcm(videoPcmResampleFile.absolutePath, audioPcmResampleFile.absolutePath, mixPcmFile.absolutePath, videoVolume, audioVolume, timeOfSize[pcm2Offset] ?: 0L)
         BLog.i("混音完成,文件路径:${mixPcmFile.absolutePath}")
 
 

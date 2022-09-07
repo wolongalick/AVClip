@@ -131,11 +131,16 @@ class AVUtils {
             while (!isFinished) {
                 val inputIndex = decoder.dequeueInputBuffer(AVConstant.TIMEOUT_US)
                 if (inputIndex >= 0) {
+                    val sampleTime = mediaExtractor.sampleTime
+                    if(sampleTime<beginTimeUs){
+                        mediaExtractor.advance()
+                        continue
+                    }
+
                     val inputByteBuffer = decoder.getInputBuffer(inputIndex)
                     val readSize = mediaExtractor.readSampleData(allocatedBuffer, 0)
                     //将从文件读取到的数据放到输入缓冲区中,目的是让解码器来解码
                     inputByteBuffer?.put(allocatedBuffer)
-                    val sampleTime = mediaExtractor.sampleTime
                     val sampleFlags = mediaExtractor.sampleFlags
 
                     if (sampleTime == -1L || (endTimeUs != null && sampleTime > endTimeUs)) {

@@ -12,6 +12,7 @@ import com.alick.avsdk.MediaParser
 import com.alick.avsdk.bean.MediaBean
 import com.alick.utilslibrary.T
 import com.alick.utilslibrary.TimeFormatUtils
+import java.io.File
 
 /**
  * @author 崔兴旺
@@ -22,7 +23,7 @@ class BaseAVInfo : ConstraintLayout {
 
     private val viewBinding: LayoutBaseAudioInfoBinding = LayoutBaseAudioInfoBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private lateinit var mediaBean: MediaBean
+    private var mediaBean: MediaBean? = null
     var onClickImport: ((mimeTypes: Array<String>) -> Unit)? = null
     var onParseSuccess: ((filePath: String) -> Unit)? = null
 
@@ -82,8 +83,10 @@ class BaseAVInfo : ConstraintLayout {
 
         viewBinding.sbOffsetTime.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * mediaBean.durationOfMicroseconds / 1000_000L).toInt()
-                viewBinding.tvBeginLocationValue.text = TimeFormatUtils.format(durationOfSeconds)
+                mediaBean?.let {
+                    val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * it.durationOfMicroseconds / 1000_000L).toInt()
+                    viewBinding.tvBeginLocationValue.text = TimeFormatUtils.format(durationOfSeconds)
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -97,8 +100,10 @@ class BaseAVInfo : ConstraintLayout {
 
         viewBinding.sbBegin.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * mediaBean.durationOfMicroseconds / 1000_000L).toInt()
-                viewBinding.tvBeginTimeValue.text = TimeFormatUtils.format(durationOfSeconds)
+                mediaBean?.let {
+                    val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * it.durationOfMicroseconds / 1000_000L).toInt()
+                    viewBinding.tvBeginTimeValue.text = TimeFormatUtils.format(durationOfSeconds)
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
@@ -112,8 +117,10 @@ class BaseAVInfo : ConstraintLayout {
 
         viewBinding.sbEnd.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * mediaBean.durationOfMicroseconds / 1000_000L).toInt()
-                viewBinding.tvBeginEndValue.text = TimeFormatUtils.format(durationOfSeconds)
+                mediaBean?.let {
+                    val durationOfSeconds: Int = (progress.toDouble() / seekBar.max * it.durationOfMicroseconds / 1000_000L).toInt()
+                    viewBinding.tvBeginEndValue.text = TimeFormatUtils.format(durationOfSeconds)
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
@@ -175,6 +182,13 @@ class BaseAVInfo : ConstraintLayout {
             return
         }
 
+        if(!File(filePath).exists()){
+            if (isNeedToast) {
+                T.show("文件不存在")
+            }
+            return
+        }
+
         val info: String = if (filePath.endsWith(".mp3", true)) {
             parseAudio(filePath)
         } else if (filePath.endsWith(".mp4", true) || filePath.endsWith(".flv", true)) {
@@ -184,7 +198,9 @@ class BaseAVInfo : ConstraintLayout {
         }
         if (info.isNotEmpty()) {
             viewBinding.etInfo.setText(info)
-            setupSeekBar(mediaBean.durationOfMicroseconds)
+            mediaBean?.let {
+                setupSeekBar(it.durationOfMicroseconds)
+            }
             onParseSuccess?.invoke(filePath)
         } else {
             T.show("文件解析失败")
@@ -196,7 +212,7 @@ class BaseAVInfo : ConstraintLayout {
         MediaParser().parseAudio(filePath).let {
             mediaBean = it
             sb.append("音频流------\n")
-                .append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
+                .append("时长:${TimeFormatUtils.format((it.durationOfMicroseconds / 1000_000L).toInt())}\n")
                 .append("缓冲区最大尺寸:${it.maxInputSize}\n")
                 .append("音频采样率:${it.sampleRate}\n")
                 .append("比特率:${it.bitrate}\n")
@@ -212,7 +228,7 @@ class BaseAVInfo : ConstraintLayout {
         MediaParser().parseVideo(filePath).let {
             mediaBean = it
             sb.append("视频流------\n")
-                .append("时长:${TimeFormatUtils.format((mediaBean.durationOfMicroseconds / 1000_000L).toInt())}\n")
+                .append("时长:${TimeFormatUtils.format((it.durationOfMicroseconds / 1000_000L).toInt())}\n")
                 .append("缓冲区最大尺寸:${it.maxInputSize}\n")
                 .append("宽:${it.width}\n")
                 .append("高:${it.height}\n")

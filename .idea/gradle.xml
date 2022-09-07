@@ -13,6 +13,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/AVSdk" />
+            <option value="$PROJECT_DIR$/MediaSelectLibrary" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/commonLibrary" />
             <option value="$PROJECT_DIR$/ffmpegLibrary" />
@@ -20,7 +21,6 @@
             <option value="$PROJECT_DIR$/utilsLibrary" />
           </set>
         </option>
-        <option name="resolveModulePerSourceSet" value="false" />
       </GradleProjectSettings>
     </option>
   </component>
