@@ -127,7 +127,7 @@ public class FileUtils {
             try {
                 file.createNewFile();// 创建文件
             } catch (Exception e) {
-                BLog.Companion.e("创建文件失败:" + e.getMessage(), TAG);
+                BLog.e("创建文件失败:" + e.getMessage(), TAG);
                 e.printStackTrace();
                 return false;
             }
@@ -357,7 +357,7 @@ public class FileUtils {
         FileOutputStream fosto = null;
         try {
             boolean newFile = createFile(toFile);
-            BLog.Companion.i("新建文件是否成功:" + newFile, TAG);
+            BLog.i("新建文件是否成功:" + newFile, TAG);
             if (!newFile) {
                 return false;
             }
@@ -372,7 +372,7 @@ public class FileUtils {
             Log.e("readfile", ex.getMessage());
             return false;
         } finally {
-            BLog.Companion.i("cxw", "关闭流");
+            BLog.i("cxw", "关闭流");
             try {
                 if (inputStream != null) {
                     inputStream.close();
@@ -414,7 +414,7 @@ public class FileUtils {
         }
         try {
             boolean newFile = createFile(toFile);
-            BLog.Companion.i("新建文件是否成功:" + newFile, TAG);
+            BLog.i("新建文件是否成功:" + newFile, TAG);
             if (!newFile) {
                 return false;
             }
@@ -430,7 +430,7 @@ public class FileUtils {
             Log.e("readfile", ex.getMessage());
             return false;
         } finally {
-            BLog.Companion.i("cxw", "关闭流");
+            BLog.i("cxw", "关闭流");
             try {
                 if (fosfrom != null) {
                     fosfrom.close();
