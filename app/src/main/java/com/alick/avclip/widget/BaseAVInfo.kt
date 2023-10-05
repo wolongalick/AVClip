@@ -150,6 +150,7 @@ class BaseAVInfo : ConstraintLayout {
     }
 
     private fun initView() {
+        viewBinding.tvSrcFilePath.text="${mimeType.hint}文件路径"
         viewBinding.etSrcFilePath.hint = "请输入${mimeType.hint}文件路径"
         if (isEnableChangeOffset) {
             viewBinding.tvBeginLocation.visibility = VISIBLE

@@ -1,6 +1,5 @@
 package com.alick.avclip.activity
 
-import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avsdk.util.AVConstant
 import com.alick.avclip.constant.SpConstant
@@ -10,7 +9,9 @@ import com.alick.avsdk.clip.VideoClipUtils
 import com.alick.utilslibrary.BLog
 import com.alick.utilslibrary.StorageUtils
 import com.alick.utilslibrary.T
+import com.alick.utilslibrary.ThreadPoolManager
 import com.alick.utilslibrary.TimeUtils
+import com.alick.utilslibrary.runOnMain
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
 
@@ -56,24 +57,31 @@ class VideoClipActivity : BaseAVActivity<ActivityVideoClipBinding>() {
                 clipDialog.show()
             }
 
-            VideoClipUtils(
-                lifecycleScope,
-                inFile,
-                outFile,
-                viewBinding.baseAudioInfo1.getBeginMicroseconds(),
-                viewBinding.baseAudioInfo1.getEndMicroseconds(),
-                onProgress = { progress: Long, max: Long ->
-                    clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                }, onFinished = {
-                    clipDialog.dismiss()
-                    //截取完成,输出所耗时长和文件输出路径
-                    val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.bottomOptions.tvSpendTimeValue.text = duration
-                    BLog.i("视频裁剪完毕,文件路径:${outFile.absolutePath}")
-                    BLog.i("总耗时:${duration}")
-                    viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
+            ThreadPoolManager.execute(object : Runnable {
+                override fun run() {
+                    VideoClipUtils(
+                        inFile,
+                        outFile,
+                        viewBinding.baseAudioInfo1.getBeginMicroseconds(),
+                        viewBinding.baseAudioInfo1.getEndMicroseconds(),
+                        onProgress = { progress: Long, max: Long ->
+                            runOnMain {
+                                clipDialog.progress = (progress.toDouble() / max * MAX_PROGRESS).toInt()
+                            }
+                        }, onFinished = {
+                            runOnMain {
+                                clipDialog.dismiss()
+                                //截取完成,输出所耗时长和文件输出路径
+                                val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
+                                viewBinding.bottomOptions.tvSpendTimeValue.text = duration
+                                BLog.i("视频裁剪完毕,文件路径:${outFile.absolutePath}")
+                                BLog.i("总耗时:${duration}")
+                                viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
+                            }
+                        }
+                    ).clip()
                 }
-            ).clip()
+            })
         }
     }
 

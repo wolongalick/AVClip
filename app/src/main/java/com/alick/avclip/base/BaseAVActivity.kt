@@ -24,9 +24,9 @@ abstract class BaseAVActivity<Binding : ViewBinding> : BaseActivity<Binding>() {
         const val SOURCE_CODE_1 = 1
         const val SOURCE_CODE_2 = 2
         const val SOURCE_CODE_3 = 3
+        const val MAX_PROGRESS = 100
     }
 
-    protected val maxProgress = 100
 
     /**
      * 获取底部选项Binding
@@ -36,9 +36,9 @@ abstract class BaseAVActivity<Binding : ViewBinding> : BaseActivity<Binding>() {
     protected val clipDialog: ProgressDialog by lazy {
         val progressDialog = ProgressDialog(this)
         progressDialog.progress = 0
-        progressDialog.max = maxProgress
+        progressDialog.max = MAX_PROGRESS
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-        progressDialog.setCancelable(false)
+        progressDialog.setCancelable(true)
         progressDialog.setCanceledOnTouchOutside(false)
         progressDialog
     }

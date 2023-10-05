@@ -13,7 +13,6 @@
         android:layout_height="wrap_content"
         android:text="音频文件路径:"
         app:layout_constraintStart_toStartOf="parent"
-
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button

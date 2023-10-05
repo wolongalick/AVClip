@@ -1,6 +1,5 @@
 package com.alick.avclip.activity
 
-import androidx.lifecycle.lifecycleScope
 import com.alick.avclip.base.BaseAVActivity
 import com.alick.avsdk.util.AVConstant
 import com.alick.avclip.constant.SpConstant
@@ -39,29 +38,38 @@ class AudioClipActivity : BaseAVActivity<ActivityAudioClipBinding>() {
 
             val beginTime = System.currentTimeMillis()
             val inFile = File(viewBinding.baseAudioInfo1.getSrcFilePath())
-            val outFile =  File(AppHolder.getApp().getExternalFilesDir(AVConstant.OUTPUT_DIR), "音频裁剪-" + inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp3")
+            val outFile = File(AppHolder.getApp().getExternalFilesDir(AVConstant.OUTPUT_DIR), "音频裁剪-" + inFile.name.substringBeforeLast(".") + "-" + TimeUtils.getCurrentTime() + ".mp3")
             if (!clipDialog.isShowing) {
                 clipDialog.show()
             }
-            AudioClipUtils(
-                lifecycleScope,
-                inFile,
-                outFile,
-                viewBinding.baseAudioInfo1.getBeginMicroseconds(),
-                viewBinding.baseAudioInfo1.getEndMicroseconds(),
-                onProgress = { progress: Long, max: Long ->
-//                    BLog.i("音频截取进度,progress:${progress},max:${max}")
-                    clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
-                }, onFinished = {
-                    clipDialog.dismiss()
-                    //截取完成,输出所耗时长和文件输出路径
-                    val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
-                    viewBinding.bottomOptions.tvSpendTimeValue.text = duration
-                    BLog.i("音频裁剪完毕,文件路径:${outFile.absolutePath}")
-                    BLog.i("总耗时:${duration}")
-                    viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
+
+            ThreadPoolManager.execute(object : Runnable {
+                override fun run() {
+                    AudioClipUtils(
+                        inFile,
+                        outFile,
+                        viewBinding.baseAudioInfo1.getBeginMicroseconds(),
+                        viewBinding.baseAudioInfo1.getEndMicroseconds(),
+                        onProgress = { progress: Long, max: Long ->
+                            val int = (progress.toDouble() / max * MAX_PROGRESS).toInt()
+                            BLog.i("音频截取进度${int}%,progress:${progress},max:${max}")
+                            runOnMain {
+                                clipDialog.progress = int
+                            }
+                        }, onFinished = {
+                            val duration = "${(System.currentTimeMillis() - beginTime) / 1000}秒"
+                            BLog.i("音频裁剪完毕,文件路径:${outFile.absolutePath}")
+                            BLog.i("总耗时:${duration}")
+                            runOnMain {
+                                clipDialog.dismiss()
+                                //截取完成,输出所耗时长和文件输出路径
+                                viewBinding.bottomOptions.tvSpendTimeValue.text = duration
+                                viewBinding.bottomOptions.tvOutputPathValue.text = outFile.absolutePath
+                            }
+                        }
+                    ).clip()
                 }
-            ).clip()
+            })
         }
     }
 

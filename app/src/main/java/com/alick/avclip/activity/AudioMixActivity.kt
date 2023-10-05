@@ -90,7 +90,7 @@ class AudioMixActivity : BaseAVActivity<ActivityAudioMixBinding>() {
                 onProgress = { progress: Long, max: Long ->
 //                    BLog.i("总进度:${progress}/${max}")
                     runOnUiThread {
-                        clipDialog.progress = (progress.toDouble() / max * maxProgress).toInt()
+                        clipDialog.progress = (progress.toDouble() / max * MAX_PROGRESS).toInt()
                     }
                 }, onFinished = {
                     clipDialog.dismiss()

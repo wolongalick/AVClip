@@ -62,15 +62,15 @@ class ExtractPcmActivity : BaseAVActivity<ActivityExtractPcmBinding>() {
                     BLog.i("开始提取pcm")
                     val outFile = File(getExternalFilesDir(AVConstant.OUTPUT_DIR), "${inFile.name.removeSuffix(".mp3").removeSuffix(".mp4")}-${TimeUtils.getCurrentTime()}.pcm")
                     AVUtils.extractPcm(
-                        inFile,
-                        outFile,
+                        inAudioOrVideoFile = inFile,
+                        outPcmFile = outFile,
                         beginTimeUs = viewBinding.baseAudioInfo1.getBeginMicroseconds(),
                         endTimeUs = viewBinding.baseAudioInfo1.getEndMicroseconds(),
-                        onProgress = { progress: Long, max: Long, percent: Float,bufferTask: BufferTask ->
+                        onProgress = { progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
                             BLog.i("progress:${progress},max:${max},进度:${percent}")
 
                             runOnUiThread {
-                                clipDialog.progress = (clipDialog.max*percent).roundToInt()
+                                clipDialog.progress = (clipDialog.max * percent).roundToInt()
                             }
                         },
                         onFinish = {
