@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ASMIdeaPluginConfiguration">
     <asm skipDebug="true" skipFrames="true" skipCode="false" expandFrames="false" />
@@ -27,10 +26,10 @@
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_extract_audio.xml" value="0.21354166666666666" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_home.xml" value="0.2394185549380077" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_main.xml" value="0.33" />
-        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_add_bgm.xml" value="0.22" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_add_bgm.xml" value="0.33" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/activity_video_clip.xml" value="0.10196406184705391" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/bottom_options.xml" value="0.24954710144927536" />
-        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_audio_info.xml" value="0.33" />
+        <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_audio_info.xml" value="0.5" />
         <entry key="..\:/StudioWorspace/ffmpeg/AVClip/app/src/main/res/layout/layout_base_info.xml" value="0.3046875" />
         <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_clip.xml" value="0.33" />
         <entry key="..\:/studio_workspace/ffmpeg/AVClip/app/src/main/res/layout/activity_audio_mix.xml" value="0.33" />
@@ -46,7 +45,7 @@
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">
