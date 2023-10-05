@@ -67,6 +67,7 @@ class AVUtils {
                     mime.startsWith("audio/") -> {
                         audioTrackIndex = index
                     }
+
                     mime.startsWith("video/") -> {
                         videoTrackIndex = index
                     }
@@ -132,7 +133,7 @@ class AVUtils {
                 val inputIndex = decoder.dequeueInputBuffer(AVConstant.TIMEOUT_US)
                 if (inputIndex >= 0) {
                     val sampleTime = mediaExtractor.sampleTime
-                    if(sampleTime<beginTimeUs){
+                    if (sampleTime < beginTimeUs) {
                         mediaExtractor.advance()
                         continue
                     }
@@ -142,18 +143,23 @@ class AVUtils {
                     //将从文件读取到的数据放到输入缓冲区中,目的是让解码器来解码
                     inputByteBuffer?.put(allocatedBuffer)
                     val sampleFlags = mediaExtractor.sampleFlags
-
-                    if (sampleTime == -1L || (endTimeUs != null && sampleTime > endTimeUs)) {
+//                    BLog.i("sampleTime:${sampleTime},endTimeUs:${endTimeUs},sampleFlags:${sampleFlags}")
+                    if (sampleTime == -1L || (endTimeUs != null && sampleTime >= endTimeUs)) {
                         decoder.queueInputBuffer(inputIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                     } else {
                         decoder.queueInputBuffer(inputIndex, 0, readSize, sampleTime, sampleFlags)
                     }
-                    mediaExtractor.advance()
+                    if (!mediaExtractor.advance()) {
+                        BLog.i("mediaExtractor.advance()返回值为false,说明达到了文件末尾,因此结束提取pcm")
+                        onProgress?.invoke(totalDuration, totalDuration, 1f, BufferTask.createEmpty((endTimeUs ?: duration), beginTimeUs, (endTimeUs ?: duration)))
+                        isFinished = true
+                    }
                 }
 
                 var outputIndex = decoder.dequeueOutputBuffer(outputBufferInfo, AVConstant.TIMEOUT_US)
                 while (outputIndex >= 0) {
                     if (outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {//触发回调
+                        BLog.i("已编码的帧达到末尾:BUFFER_FLAG_END_OF_STREAM,因此结束提取pcm")
                         onProgress?.invoke(totalDuration, totalDuration, 1f, BufferTask.createEmpty(outputBufferInfo.presentationTimeUs, beginTimeUs, (endTimeUs ?: duration)))
                         isFinished = true
                     } else {
@@ -163,10 +169,11 @@ class AVUtils {
                             val newOutputBuffer = clone(it)
                             val wroteSize = outFileChannel.write(newOutputBuffer)
 
+//                            BLog.i("解码后的presentationTimeUs:${outputBufferInfo.presentationTimeUs},inAudioOrVideoFile:${inAudioOrVideoFile.absolutePath}")
                             //已解码时长(单位:微秒)
                             val decodedDuration = outputBufferInfo.presentationTimeUs - beginTimeUs
 
-                            if (offsetTime != null && decodedDuration >= offsetTime && timeOfSize[offsetTime]==0L) {
+                            if (offsetTime != null && decodedDuration >= offsetTime && timeOfSize[offsetTime] == 0L) {
                                 val size = outFileChannel.size()
                                 timeOfSize[offsetTime] = size
                                 BLog.i("第一个文件,时间与文件大小关系,${TimeFormatUtils.format((offsetTime / 1000_000L).toInt())}对应${size}字节")
@@ -177,12 +184,12 @@ class AVUtils {
 
                             //封装缓冲任务
                             val bufferTask = BufferTask(
-                                newOutputBuffer,
-                                wroteSize,
-                                outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM,
-                                outputBufferInfo.presentationTimeUs,
-                                beginTimeUs,
-                                (endTimeUs ?: duration)
+                                byteBuffer = newOutputBuffer,
+                                wroteSize = wroteSize,
+                                isEndOfStream = outputBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM,
+                                presentationTimeUs = outputBufferInfo.presentationTimeUs,
+                                beginMicroseconds = beginTimeUs,
+                                endMicroseconds = (endTimeUs ?: duration)
                             )
 
                             //触发回调
@@ -206,15 +213,15 @@ class AVUtils {
             return if (mediaFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
                 //使用从实际媒体格式中取出的实际值
                 mediaFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE).let {
-                    if (it > 1024 * 1024) {
-                        1024 * 1024
+                    if (it > 1024 * 1024 * 2) {
+                        1024 * 1024 * 2
                     } else {
                         it
                     }
                 }
             } else {
                 //使用默认值
-                1024 * 1024
+                1024 * 1024 * 2
             }
         }
 

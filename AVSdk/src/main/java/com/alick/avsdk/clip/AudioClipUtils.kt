@@ -17,13 +17,12 @@ import java.io.File
  * @date 2022/3/11 22:05
  */
 class AudioClipUtils(
-    private val lifecycleCoroutineScope: LifecycleCoroutineScope,
     private val inFile: File,
     private val outMp3File: File,
     private val beginMicroseconds: Long,
     private val endMicroseconds: Long,
     private val onProgress: (progress: Long, max: Long) -> Unit,
-    private val onFinished: () -> Unit
+    private val onFinished: () -> Unit,
 ) {
 
     /**
@@ -31,32 +30,27 @@ class AudioClipUtils(
      */
     fun clip() {
         //运行pcm转码MP3的协程
-        lifecycleCoroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                val outPcmFile = File(outMp3File.parentFile, outMp3File.name.replaceAfterLast(".", "pcm"))
-                val audioBean = MediaParser().parseAudio(inFile.absolutePath)
-                val pcm2Mp3Utils = Pcm2Mp3Utils(
-                    lifecycleCoroutineScope,
-                    outPcmFile,
-                    outMp3File,
-                    audioBean.channelCount,
-                    audioBean.bitrate,
-                    audioBean.sampleRate,
-                    onProgress = onProgress,
-                    onFinished = onFinished
-                )
-                AVUtils.extractPcm(
-                    inFile,
-                    outPcmFile,
-                    beginMicroseconds,
-                    endMicroseconds,
-                    onProgress = { progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
-                        pcm2Mp3Utils.addPcmTask(bufferTask)
-                    },
-                    onFinish = {
+        val outPcmFile = File(outMp3File.parentFile, outMp3File.name.replaceAfterLast(".", "pcm"))
+        val audioBean = MediaParser().parseAudio(inFile.absolutePath)
+        val pcm2Mp3Utils = Pcm2Mp3Utils(
+            outPcmFile,
+            outMp3File,
+            audioBean.channelCount,
+            audioBean.bitrate,
+            audioBean.sampleRate,
+            onFinished = onFinished
+        )
+        AVUtils.extractPcm(
+            inAudioOrVideoFile = inFile,
+            outPcmFile = outPcmFile,
+            beginTimeUs = beginMicroseconds,
+            endTimeUs = endMicroseconds,
+            onProgress = { progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
+                onProgress(progress,max)
+                pcm2Mp3Utils.addPcmTask(bufferTask)
+            },
+            onFinish = {
 
-                    })
-            }
-        }
+            })
     }
 }

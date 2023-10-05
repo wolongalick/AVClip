@@ -5,12 +5,8 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
-import androidx.lifecycle.LifecycleCoroutineScope
 import com.alick.avsdk.util.AVUtils
 import com.alick.utilslibrary.BLog
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 
@@ -21,14 +17,13 @@ import java.nio.ByteBuffer
  * @description
  */
 class VideoClipUtils(
-    protected val lifecycleCoroutineScope: LifecycleCoroutineScope,
     private val inFile: File,
     private val outFile: File,
     protected val beginMicroseconds: Long,
     private val endMicroseconds: Long,
-    private val tag: String = "VideoClipUtils",
+    private val TAG: String = "VideoClipUtils",
     protected val onProgress: (progress: Long, max: Long) -> Unit,
-    protected val onFinished: () -> Unit
+    protected val onFinished: () -> Unit,
 ) {
 
     private var videoIndex: Int = -1
@@ -42,41 +37,36 @@ class VideoClipUtils(
     private val mediaMuxer: MediaMuxer = MediaMuxer(outFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
     fun clip() {
-        lifecycleCoroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                mediaExtractor.setDataSource(inFile.absolutePath)
+        mediaExtractor.setDataSource(inFile.absolutePath)
 
-                for (index in 0 until mediaExtractor.trackCount) {
-                    val trackFormat = mediaExtractor.getTrackFormat(index)
-                    if (trackFormat.getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true) {
-                        videoIndex = index
-                        mediaMuxer.addTrack(trackFormat)
-                        videoFormat = trackFormat
-                    } else if (trackFormat.getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true) {
-                        audioIndex = index
-                        mediaMuxer.addTrack(trackFormat)
-                        audioFormat = trackFormat
-                    }
-                }
-
-                mediaExtractor.seekTo(beginMicroseconds, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
-
-                mediaMuxer.start()
-
-                clip(videoFormat, videoIndex)
-                clip(audioFormat, audioIndex)
-                BLog.i("正在视频裁剪,准备释放资源")
-                release()
-                withContext(Dispatchers.Main) {
-                    onFinished()
-                }
+        for (index in 0 until mediaExtractor.trackCount) {
+            val trackFormat = mediaExtractor.getTrackFormat(index)
+            if (trackFormat.getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true) {
+                videoIndex = index
+                mediaMuxer.addTrack(trackFormat)
+                videoFormat = trackFormat
+            } else if (trackFormat.getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true) {
+                audioIndex = index
+                mediaMuxer.addTrack(trackFormat)
+                audioFormat = trackFormat
             }
         }
+
+        mediaExtractor.seekTo(beginMicroseconds, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+
+        mediaMuxer.start()
+
+        clip(videoFormat, videoIndex)
+        clip(audioFormat, audioIndex)
+        BLog.i("正在视频裁剪,准备释放资源")
+        release()
+        onFinished()
     }
 
 
     @SuppressLint("WrongConstant")
-    private suspend fun clip(mediaFormat: MediaFormat, trackIndex: Int) {
+    private fun clip(mediaFormat: MediaFormat, trackIndex: Int) {
+        BLog.i("开始裁剪的媒体格式:${mediaFormat.getString(MediaFormat.KEY_MIME)}")
         mediaExtractor.selectTrack(trackIndex)
         val byteBuffer = ByteBuffer.allocateDirect(AVUtils.getMaxInputSize(mediaFormat))
         val bufferInfo = MediaCodec.BufferInfo()
@@ -95,10 +85,12 @@ class VideoClipUtils(
                     mediaExtractor.advance()//读取下一帧数据
                     isInRange = false
                 }
+
                 sampleTimeUs == -1L || sampleTimeUs >= endMicroseconds -> {
                     //结束
                     return
                 }
+
                 else -> {
                     //正常执行
                 }
@@ -112,12 +104,15 @@ class VideoClipUtils(
                 mediaMuxer.writeSampleData(trackIndex, byteBuffer, bufferInfo)
                 mediaExtractor.advance()
 
-                withContext(Dispatchers.Main) {
-                    if (trackIndex == videoIndex) {
-                        onProgress(((sampleTimeUs - beginMicroseconds) * 0.5).toLong(), endMicroseconds - beginMicroseconds)
-                    } else if (trackIndex == audioIndex) {
-                        onProgress(((endMicroseconds - beginMicroseconds) * 0.5 + (sampleTimeUs - beginMicroseconds) * 0.5).toLong(), endMicroseconds - beginMicroseconds)
-                    }
+                val max = endMicroseconds - beginMicroseconds
+                if (trackIndex == videoIndex) {
+                    //这里成0.5的目的是:视频剪辑的进度,占进度条的前半部分
+                    val progress = ((sampleTimeUs - beginMicroseconds) * 0.5).toLong()
+                    onProgress(progress, max)
+                } else if (trackIndex == audioIndex) {
+                    //这里成0.5的目的是:视频剪辑的进度,占进度条的后半部分
+                    val progress = (max * 0.5 + (sampleTimeUs - beginMicroseconds) * 0.5).toLong()
+                    onProgress(progress, max)
                 }
             }
         }

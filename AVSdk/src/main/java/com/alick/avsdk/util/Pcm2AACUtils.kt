@@ -25,7 +25,6 @@ class Pcm2AACUtils(
 
 
     fun convert() {
-
         BLog.i("开始将pcm转成aac,,采样率:${sampleRate},比特率:${bitRate},通道数:${channelCount}")
         val mediaCodec: MediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
         val mediaFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, sampleRate, channelCount)

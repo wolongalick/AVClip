@@ -1,16 +1,10 @@
 package com.alick.avsdk.util
 
-import androidx.lifecycle.LifecycleCoroutineScope
 import com.alick.avsdk.clip.BufferTask
 import com.alick.lamelibrary.LameUtils
 import com.alick.utilslibrary.BLog
-import com.alick.utilslibrary.FileUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.alick.utilslibrary.ThreadPoolManager
 import java.io.File
-import java.io.FileOutputStream
-import java.nio.channels.FileChannel
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 
@@ -20,16 +14,14 @@ import java.util.concurrent.BlockingQueue
  * @description
  */
 open class Pcm2Mp3Utils(
-    private val lifecycleCoroutineScope: LifecycleCoroutineScope,
     private val inPcmFile: File,
     private val outMp3File: File,
     private val channelCount: Int,
     private val bitRate: Int,
     private val sampleRate: Int,
-    private val onProgress: (progress: Long, max: Long) -> Unit,
-    private val onFinished: () -> Unit
+    private val onFinished: () -> Unit,
 
-) {
+    ) {
     private val lameUtils = LameUtils()
     private var isEncoding = false
 
@@ -41,8 +33,8 @@ open class Pcm2Mp3Utils(
 
     private fun start() {
         isEncoding = true
-        lifecycleCoroutineScope.launch {
-            withContext(Dispatchers.IO) {
+        ThreadPoolManager.execute(object : Runnable {
+            override fun run() {
                 BLog.i("PcmToMp3Thread线程名:" + Thread.currentThread().name)
                 var cacheBufferSize = 0
                 while (isEncoding) {
@@ -50,9 +42,7 @@ open class Pcm2Mp3Utils(
                     val wroteSize = bufferTask.wroteSize
                     cacheBufferSize += wroteSize
 //                    BLog.i("wroteSize:${wroteSize},cacheBufferSize:${cacheBufferSize}")
-                    withContext(Dispatchers.Main) {
-                        onProgress(bufferTask.presentationTimeUs - bufferTask.beginMicroseconds, bufferTask.endMicroseconds - bufferTask.beginMicroseconds)
-                    }
+
                     if (bufferTask.isEndOfStream || cacheBufferSize >= bufferSize) {
                         //只有当达到流末尾时,或新增的文件大小达到一定程度时,才让lame来编码
                         lameUtils.encode(bufferTask.isEndOfStream)
@@ -63,15 +53,12 @@ open class Pcm2Mp3Utils(
                     }
                 }
                 BLog.i("pcmToMp3Thread线程结束运行")
-
-//                finish(writeChannel, mediaExtractor, mediaCodec)
-            }
-            withContext(Dispatchers.Main) {
                 onFinished()
+                BLog.i("lame释放资源")
+                lameUtils.release()
             }
-            BLog.i("lame释放资源")
-            lameUtils.release()
-        }
+        })
+
     }
 
     /**

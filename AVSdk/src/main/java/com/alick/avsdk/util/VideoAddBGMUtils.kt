@@ -25,7 +25,7 @@ class VideoAddBGMUtils(
     private val videoVolume: Int,
     @IntRange(from = 0, to = 100)
     private val audioVolume: Int,
-    private val pcm2Offset: Long = 0L
+    private val pcm2Offset: Long = 0L,
 ) {
 
     fun mix() {
@@ -40,16 +40,15 @@ class VideoAddBGMUtils(
         val timeOfSize: MutableMap<Long, Long> = mutableMapOf<Long, Long>().apply {
             put(pcm2Offset, 0)
         }
-        AVUtils.extractPcm(inVideoFile, videoPcmFile, timeOfSize = timeOfSize, onProgress = { progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
-
+        AVUtils.extractPcm(inAudioOrVideoFile = inVideoFile, outPcmFile = videoPcmFile, timeOfSize = timeOfSize, onProgress = { progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
+//            BLog.i("从视频文件中提取pcm进度:${percent}")
 
         })
         BLog.i("从视频提取pcm文件路径:${videoPcmFile.absolutePath}")
 
         val audioPcmFile = File(dir, inAudioFile.name.replaceAfterLast(".", "pcm"))
-        AVUtils.extractPcm(inAudioFile, audioPcmFile,onProgress={progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
-
-
+        AVUtils.extractPcm(inAudioOrVideoFile = inAudioFile, outPcmFile = audioPcmFile, onProgress = { progress: Long, max: Long, percent: Float, bufferTask: BufferTask ->
+//            BLog.i("从音频文件中提取pcm进度:${percent}")
         })
 
         BLog.i("从音提取pcm文件路径:${audioPcmFile.absolutePath}")
@@ -172,10 +171,12 @@ class VideoAddBGMUtils(
                     mediaExtractor.advance()//读取下一帧数据
                     isInRange = false
                 }
+
                 sampleTimeUs == -1L || sampleTimeUs >= endMicroseconds -> {
                     //结束
                     return
                 }
+
                 else -> {
                     //正常执行
                 }
